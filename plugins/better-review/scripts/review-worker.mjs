@@ -210,7 +210,7 @@ async function main() {
       sandbox: "workspace-write",
       serviceName: "BetterReview",
       developerInstructions:
-        "You are running as the BetterReview card generator. You must write only review card Markdown files inside the requested .better-review/current/cards directory and must never edit source code.",
+        "You are running as the BetterReview card generator. You must write only review card Markdown files inside the requested .better-review/current/cards directory and must never edit source code. YAML rule: always double-quote any frontmatter string value that contains ': ' (colon-space), e.g. title: \"Evidence: my title\" — unquoted colon-space values are invalid YAML and will silently drop the card from the viewer.",
       ephemeral: true
     });
 

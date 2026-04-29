@@ -218,7 +218,7 @@ Frontmatter:
 ---
 id: evidence-02a-webhook-handler
 level: 3
-title: Evidence: webhook handler
+title: "Evidence: webhook handler"
 parent: change-02-stripe-webhooks
 order: 1
 risk: high
@@ -364,6 +364,10 @@ Level 3: Evidence Card
 
 Use frontmatter only for UI metadata:
 id, level, title, parent, order, risk, confidence, status, labels, image, children.
+
+Always double-quote any YAML string value that contains `: ` (colon-space), such as
+evidence card titles like `"Evidence: webhook handler"`. Unquoted values containing
+`: ` are invalid YAML and will silently drop the card from the viewer.
 
 Use markdown body for all semantic review content.
 
