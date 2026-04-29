@@ -8,7 +8,7 @@ import { execFile } from "node:child_process";
 
 const execFileAsync = promisify(execFile);
 const PLUGIN_ROOT = fileURLToPath(new URL("../", import.meta.url));
-const MODEL = process.env.BETTER_REVIEW_MODEL ?? "gpt-5.4";
+const MODEL = process.env.BETTER_REVIEW_MODEL ?? "gpt-5.5";
 const SERVICE_TIER = "fast";
 const EFFORT = "low";
 
