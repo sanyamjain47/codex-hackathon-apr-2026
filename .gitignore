@@ -6,3 +6,5 @@ dist/
 npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*
+.docs
+Codex.local.md
