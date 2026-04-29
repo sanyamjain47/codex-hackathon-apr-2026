@@ -1,0 +1,35 @@
+{
+  "name": "git-diff-viewer",
+  "version": "0.1.1",
+  "description": "Codex plugin proof of concept for launching a local Git Diff Viewer UI.",
+  "author": {
+    "name": "Better Review"
+  },
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "git",
+    "diff",
+    "review"
+  ],
+  "skills": "./skills/",
+  "apps": "./.app.json",
+  "interface": {
+    "displayName": "Git Diff Viewer",
+    "shortDescription": "Launch a local Next.js UI for Git diff review workflows.",
+    "longDescription": "Proof of concept for a Codex plugin that starts a local Next.js Git Diff Viewer app when invoked from a Codex thread.",
+    "developerName": "Better Review",
+    "category": "Productivity",
+    "capabilities": [
+      "Local viewer",
+      "Next.js",
+      "Git review workflow"
+    ],
+    "defaultPrompt": [
+      "Open Git Diff Viewer.",
+      "Launch the Git Diff Viewer UI."
+    ],
+    "brandColor": "#2563EB",
+    "screenshots": []
+  }
+}
