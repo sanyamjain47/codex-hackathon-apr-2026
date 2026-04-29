@@ -1,6 +1,6 @@
 {
   "name": "better-review",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "private": true,
   "description": "Codex plugin scaffold for BetterReview review generation and visualization.",
   "scripts": {

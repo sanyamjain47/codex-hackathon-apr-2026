@@ -1,13 +1,7 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
 import { openSync } from "node:fs";
-import {
-  access,
-  mkdir,
-  readFile,
-  rename,
-  writeFile
-} from "node:fs/promises";
+import { access, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
@@ -18,15 +12,15 @@ const MODEL = process.env.BETTER_REVIEW_MODEL ?? "gpt-5.4";
 const SERVICE_TIER = "fast";
 const EFFORT = "low";
 const PLUGIN_ROOT = fileURLToPath(new URL("../", import.meta.url));
-const REPO_ROOT = path.resolve(PLUGIN_ROOT, "../..");
 const SESSION_DIR_NAME = ".better-review";
 const OUTPUT_LIMIT = 8 * 1024 * 1024;
 
 function parseArgs(argv) {
   const args = {
-    target: process.env.BETTER_REVIEW_TARGET ?? process.env.INIT_CWD ?? process.cwd(),
+    target:
+      process.env.BETTER_REVIEW_TARGET ?? process.env.INIT_CWD ?? process.cwd(),
     base: null,
-    dryRun: false
+    dryRun: false,
   };
 
   for (let index = 2; index < argv.length; index += 1) {
@@ -59,7 +53,7 @@ async function git(cwd, args) {
   const { stdout } = await execFileAsync("git", args, {
     cwd,
     timeout: 20_000,
-    maxBuffer: OUTPUT_LIMIT
+    maxBuffer: OUTPUT_LIMIT,
   });
 
   return stdout.trim();
@@ -91,33 +85,45 @@ async function resolveBase(gitRoot, requestedBase) {
   const candidates = [];
 
   if (requestedBase) {
-    candidates.push({ label: requestedBase, ref: requestedBase, required: true });
+    candidates.push({
+      label: requestedBase,
+      ref: requestedBase,
+      required: true,
+    });
   } else {
     const upstream = await gitOrNull(gitRoot, [
       "rev-parse",
       "--abbrev-ref",
       "--symbolic-full-name",
-      "@{u}"
+      "@{u}",
     ]);
 
     if (upstream) {
-      candidates.push({ label: `upstream ${upstream}`, ref: upstream, required: false });
+      candidates.push({
+        label: `upstream ${upstream}`,
+        ref: upstream,
+        required: false,
+      });
     }
 
     candidates.push(
       { label: "origin/main", ref: "origin/main", required: false },
-      { label: "main", ref: "main", required: false }
+      { label: "main", ref: "main", required: false },
     );
   }
 
   for (const candidate of candidates) {
-    const mergeBase = await gitOrNull(gitRoot, ["merge-base", candidate.ref, "HEAD"]);
+    const mergeBase = await gitOrNull(gitRoot, [
+      "merge-base",
+      candidate.ref,
+      "HEAD",
+    ]);
 
     if (mergeBase) {
       return {
         baseRef: candidate.ref,
         baseLabel: candidate.label,
-        mergeBase
+        mergeBase,
       };
     }
 
@@ -127,7 +133,7 @@ async function resolveBase(gitRoot, requestedBase) {
   }
 
   throw new Error(
-    "Could not determine the branch diff base. Run again with --base <branch-or-sha>."
+    "Could not determine the branch diff base. Run again with --base <branch-or-sha>.",
   );
 }
 
@@ -139,7 +145,9 @@ async function ensureIgnored(gitRoot) {
     current = await readFile(gitignorePath, "utf8");
   }
 
-  if (current.split(/\r?\n/).some((line) => line.trim() === ".better-review/")) {
+  if (
+    current.split(/\r?\n/).some((line) => line.trim() === ".better-review/")
+  ) {
     return;
   }
 
@@ -148,7 +156,11 @@ async function ensureIgnored(gitRoot) {
 }
 
 function timestampId() {
-  return new Date().toISOString().replace(/[-:.]/g, "").replace("T", "-").slice(0, 15);
+  return new Date()
+    .toISOString()
+    .replace(/[-:.]/g, "")
+    .replace("T", "-")
+    .slice(0, 15);
 }
 
 async function prepareSession(gitRoot) {
@@ -167,7 +179,7 @@ async function prepareSession(gitRoot) {
   return {
     betterReviewRoot,
     currentDir,
-    reviewHtml: path.join(currentDir, "review.html")
+    reviewHtml: path.join(currentDir, "review.html"),
   };
 }
 
@@ -175,14 +187,27 @@ async function collectReviewContext(gitRoot, mergeBase) {
   const range = `${mergeBase}...HEAD`;
   const logRange = `${mergeBase}..HEAD`;
 
-  const [headRef, headSha, diffStat, nameStatus, commits, diff] = await Promise.all([
-    gitOrNull(gitRoot, ["rev-parse", "--abbrev-ref", "HEAD"]),
-    git(gitRoot, ["rev-parse", "HEAD"]),
-    gitOrNull(gitRoot, ["diff", "--stat", "--no-color", "--no-ext-diff", range]),
-    gitOrNull(gitRoot, ["diff", "--name-status", "--no-color", "--no-ext-diff", range]),
-    gitOrNull(gitRoot, ["log", "--oneline", "--decorate=short", logRange]),
-    gitOrNull(gitRoot, ["diff", "--no-color", "--no-ext-diff", range])
-  ]);
+  const [headRef, headSha, diffStat, nameStatus, commits, diff] =
+    await Promise.all([
+      gitOrNull(gitRoot, ["rev-parse", "--abbrev-ref", "HEAD"]),
+      git(gitRoot, ["rev-parse", "HEAD"]),
+      gitOrNull(gitRoot, [
+        "diff",
+        "--stat",
+        "--no-color",
+        "--no-ext-diff",
+        range,
+      ]),
+      gitOrNull(gitRoot, [
+        "diff",
+        "--name-status",
+        "--no-color",
+        "--no-ext-diff",
+        range,
+      ]),
+      gitOrNull(gitRoot, ["log", "--oneline", "--decorate=short", logRange]),
+      gitOrNull(gitRoot, ["diff", "--no-color", "--no-ext-diff", range]),
+    ]);
 
   return {
     headRef: headRef ?? "HEAD",
@@ -190,12 +215,16 @@ async function collectReviewContext(gitRoot, mergeBase) {
     diffStat: diffStat ?? "",
     nameStatus: nameStatus ?? "",
     commits: commits ?? "",
-    diff: diff ?? ""
+    diff: diff ?? "",
   };
 }
 
 async function buildPrompt({ gitRoot, session, base, context }) {
-  const templatePath = path.join(REPO_ROOT, "examples", "BetterReview-Template.html");
+  const templatePath = path.join(
+    REPO_ROOT,
+    "examples",
+    "BetterReview-Template.html",
+  );
   const templateHtml = await readFile(templatePath, "utf8");
   const prd = await readFile(path.join(REPO_ROOT, "docs", "prd.md"), "utf8");
 
@@ -407,13 +436,13 @@ async function main() {
   const context = await collectReviewContext(gitRoot, base.mergeBase);
   const dryRunSession = {
     currentDir: path.join(gitRoot, SESSION_DIR_NAME, "current"),
-    reviewHtml: path.join(gitRoot, SESSION_DIR_NAME, "current", "review.html")
+    reviewHtml: path.join(gitRoot, SESSION_DIR_NAME, "current", "review.html"),
   };
   const prompt = await buildPrompt({
     gitRoot,
     session: dryRunSession,
     base,
-    context
+    context,
   });
 
   if (args.dryRun) {
@@ -428,11 +457,11 @@ async function main() {
           serviceTier: SERVICE_TIER,
           effort: EFFORT,
           promptBytes: Buffer.byteLength(prompt, "utf8"),
-          reviewHtml: dryRunSession.reviewHtml
+          reviewHtml: dryRunSession.reviewHtml,
         },
         null,
-        2
-      )
+        2,
+      ),
     );
     return;
   }
@@ -453,7 +482,7 @@ async function main() {
       baseLabel: base.baseLabel,
       mergeBase: base.mergeBase,
       headRef: context.headRef,
-      headSha: context.headSha
+      headSha: context.headSha,
     },
     model: MODEL,
     serviceTier: SERVICE_TIER,
@@ -461,7 +490,7 @@ async function main() {
     reviewHtml: session.reviewHtml,
     error: null,
     startedAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
   });
 
   const logFd = openSync(logPath, "a");
@@ -472,13 +501,13 @@ async function main() {
       "--session",
       session.currentDir,
       "--target",
-      gitRoot
+      gitRoot,
     ],
     {
       cwd: gitRoot,
       detached: true,
-      stdio: ["ignore", logFd, logFd]
-    }
+      stdio: ["ignore", logFd, logFd],
+    },
   );
 
   worker.unref();
@@ -492,11 +521,11 @@ async function main() {
         sessionDir: session.currentDir,
         reviewHtml: session.reviewHtml,
         manifestPath,
-        logPath
+        logPath,
       },
       null,
-      2
-    )
+      2,
+    ),
   );
 }
 

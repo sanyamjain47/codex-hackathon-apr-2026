@@ -11,6 +11,7 @@ yarn-debug.log*
 .docs
 Codex.local.md
 .better-review/
+**/review/feedback.jsonl
 
 .agents
 .claude
