@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="260" viewBox="0 0 720 260" role="img" aria-labelledby="title desc">
+  <title id="title">Markdown rendering pipeline</title>
+  <desc id="desc">Markdown text becomes a parsed tree and then React UI elements.</desc>
+  <rect width="720" height="260" fill="#f6f7fb"/>
+  <rect x="44" y="82" width="160" height="96" rx="8" fill="#ffffff" stroke="#b7c4d8"/>
+  <text x="78" y="124" font-family="Arial, sans-serif" font-size="20" fill="#172033">Markdown</text>
+  <text x="82" y="152" font-family="Arial, sans-serif" font-size="14" fill="#52627a">images, tables, code</text>
+  <path d="M214 130 H300" stroke="#71809a" stroke-width="3"/>
+  <rect x="310" y="82" width="120" height="96" rx="8" fill="#ffffff" stroke="#b7c4d8"/>
+  <text x="342" y="124" font-family="Arial, sans-serif" font-size="20" fill="#172033">AST</text>
+  <text x="334" y="152" font-family="Arial, sans-serif" font-size="14" fill="#52627a">remark</text>
+  <path d="M440 130 H526" stroke="#71809a" stroke-width="3"/>
+  <rect x="536" y="82" width="140" height="96" rx="8" fill="#ffffff" stroke="#b7c4d8"/>
+  <text x="576" y="124" font-family="Arial, sans-serif" font-size="20" fill="#172033">React</text>
+  <text x="562" y="152" font-family="Arial, sans-serif" font-size="14" fill="#52627a">custom components</text>
+</svg>
+

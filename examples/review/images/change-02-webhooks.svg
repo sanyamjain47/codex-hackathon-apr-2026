@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="260" viewBox="0 0 720 260" role="img" aria-labelledby="title desc">
+  <title id="title">Review UI layout</title>
+  <desc id="desc">Three-pane review UI with tree, content, and metadata.</desc>
+  <rect width="720" height="260" fill="#f6f7fb"/>
+  <rect x="40" y="34" width="150" height="192" rx="8" fill="#ffffff" stroke="#b7c4d8"/>
+  <rect x="210" y="34" width="300" height="192" rx="8" fill="#ffffff" stroke="#b7c4d8"/>
+  <rect x="530" y="34" width="150" height="192" rx="8" fill="#ffffff" stroke="#b7c4d8"/>
+  <text x="70" y="72" font-family="Arial, sans-serif" font-size="18" fill="#172033">Tree</text>
+  <text x="238" y="72" font-family="Arial, sans-serif" font-size="18" fill="#172033">Markdown card</text>
+  <text x="558" y="72" font-family="Arial, sans-serif" font-size="18" fill="#172033">Meta</text>
+  <line x1="238" y1="104" x2="482" y2="104" stroke="#d9e0eb" stroke-width="8"/>
+  <line x1="238" y1="132" x2="454" y2="132" stroke="#d9e0eb" stroke-width="8"/>
+  <line x1="238" y1="160" x2="470" y2="160" stroke="#d9e0eb" stroke-width="8"/>
+  <circle cx="586" cy="118" r="18" fill="#f4c76b"/>
+  <rect x="558" y="154" width="82" height="24" rx="8" fill="#eaf1ff" stroke="#8ca7d8"/>
+</svg>
+

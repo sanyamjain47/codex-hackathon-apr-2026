@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="260" viewBox="0 0 720 260" role="img" aria-labelledby="title desc">
+  <title id="title">Review card contract</title>
+  <desc id="desc">Frontmatter metadata is separated from Markdown review content.</desc>
+  <rect width="720" height="260" fill="#f6f7fb"/>
+  <rect x="48" y="44" width="264" height="172" rx="8" fill="#ffffff" stroke="#b7c4d8"/>
+  <text x="76" y="84" font-family="Arial, sans-serif" font-size="22" fill="#172033">Frontmatter</text>
+  <text x="76" y="122" font-family="Arial, sans-serif" font-size="16" fill="#52627a">id, level, order</text>
+  <text x="76" y="150" font-family="Arial, sans-serif" font-size="16" fill="#52627a">risk, confidence</text>
+  <text x="76" y="178" font-family="Arial, sans-serif" font-size="16" fill="#52627a">labels, children</text>
+  <path d="M320 130 H400" stroke="#71809a" stroke-width="3"/>
+  <rect x="408" y="44" width="264" height="172" rx="8" fill="#ffffff" stroke="#b7c4d8"/>
+  <text x="436" y="84" font-family="Arial, sans-serif" font-size="22" fill="#172033">Markdown</text>
+  <text x="436" y="122" font-family="Arial, sans-serif" font-size="16" fill="#52627a">what changed</text>
+  <text x="436" y="150" font-family="Arial, sans-serif" font-size="16" fill="#52627a">why it matters</text>
+  <text x="436" y="178" font-family="Arial, sans-serif" font-size="16" fill="#52627a">evidence and questions</text>
+</svg>
+

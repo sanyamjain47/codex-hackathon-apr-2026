@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="360" viewBox="0 0 960 360" role="img" aria-labelledby="title desc">
+  <title id="title">Three-level review tree</title>
+  <desc id="desc">Overview card connected to conceptual change cards and evidence cards.</desc>
+  <rect width="960" height="360" fill="#f6f7fb"/>
+  <rect x="56" y="52" width="220" height="72" rx="8" fill="#ffffff" stroke="#b7c4d8"/>
+  <text x="84" y="96" font-family="Arial, sans-serif" font-size="22" fill="#172033">Overview</text>
+  <path d="M276 88 H390" stroke="#71809a" stroke-width="3"/>
+  <rect x="390" y="32" width="240" height="56" rx="8" fill="#ffffff" stroke="#b7c4d8"/>
+  <rect x="390" y="112" width="240" height="56" rx="8" fill="#ffffff" stroke="#b7c4d8"/>
+  <rect x="390" y="192" width="240" height="56" rx="8" fill="#ffffff" stroke="#b7c4d8"/>
+  <text x="414" y="67" font-family="Arial, sans-serif" font-size="17" fill="#172033">Contract model</text>
+  <text x="414" y="147" font-family="Arial, sans-serif" font-size="17" fill="#172033">Review UI</text>
+  <text x="414" y="227" font-family="Arial, sans-serif" font-size="17" fill="#172033">Markdown rendering</text>
+  <path d="M630 60 H722 M630 140 H722 M630 220 H722" stroke="#71809a" stroke-width="3"/>
+  <rect x="722" y="32" width="182" height="216" rx="8" fill="#eaf1ff" stroke="#8ca7d8"/>
+  <text x="752" y="88" font-family="Arial, sans-serif" font-size="18" fill="#172033">Evidence</text>
+  <text x="752" y="126" font-family="Arial, sans-serif" font-size="18" fill="#172033">Diff snippets</text>
+  <text x="752" y="164" font-family="Arial, sans-serif" font-size="18" fill="#172033">Images</text>
+  <text x="752" y="202" font-family="Arial, sans-serif" font-size="18" fill="#172033">Tables</text>
+</svg>
+
