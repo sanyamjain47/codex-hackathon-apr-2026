@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Git Diff Viewer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    />
+    <link rel="stylesheet" href="/static/app.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark-dimmed.min.css"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <header id="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span class="brand-name">Diff Review</span>
+        </div>
+        <div class="topbar-actions">
+          <div class="status-counters" aria-label="Review status">
+            <span class="counter c-approved" id="count-approved" title="Approved">
+              <span class="dot"></span><b id="n-approved">0</b><span class="lbl">approved</span>
+            </span>
+            <span class="counter c-changes" id="count-changes" title="Needs changes">
+              <span class="dot"></span><b id="n-changes">0</b><span class="lbl">changes</span>
+            </span>
+            <span class="counter c-flagged" id="count-flagged" title="Flagged">
+              <span class="dot"></span><b id="n-flagged">0</b><span class="lbl">flagged</span>
+            </span>
+          </div>
+          <span class="agent-state" id="agent-state" title="Producer state">running</span>
+          <button id="help-toggle" class="ghost-btn" title="Keyboard help">?</button>
+        </div>
+      </header>
+
+      <aside id="side" aria-label="Card context">
+        <div id="side-pos" class="side-pos"></div>
+        <h1 id="side-title" class="side-title"></h1>
+        <div id="side-anchor" class="side-anchor"></div>
+        <div id="side-meta" class="side-meta"></div>
+        <div id="side-path" class="side-section"></div>
+        <div id="side-relatives" class="side-section"></div>
+        <div class="side-nav">
+          <button class="side-nav-btn" data-act="up"><span class="kbd">↑</span> shallower</button>
+          <button class="side-nav-btn" data-act="down"><span class="kbd">↓</span> deeper</button>
+        </div>
+      </aside>
+
+      <main id="card" tabindex="-1">
+        <div class="placeholder">Loading review…</div>
+      </main>
+
+      <button class="rail rail-left" id="rail-prev" title="Previous sibling (←)" aria-label="Previous sibling">
+        <span class="chev">‹</span>
+      </button>
+      <button class="rail rail-right" id="rail-next" title="Next sibling (→)" aria-label="Next sibling">
+        <span class="chev">›</span>
+      </button>
+      <div class="rail-stack" aria-label="Depth navigation">
+        <button class="rail rail-up" id="rail-up" title="Shallower (↑)" aria-label="Shallower">
+          <span class="chev">∧</span>
+          <span class="lbl">shallower</span>
+        </button>
+        <button class="rail rail-down" id="rail-down" title="Deeper (↓)" aria-label="Deeper">
+          <span class="chev">∨</span>
+          <span class="lbl">deeper</span>
+        </button>
+      </div>
+
+      <aside id="queue">
+        <div class="queue-head">
+          <h2>Comments</h2>
+          <span class="queue-count" id="queue-count">0</span>
+        </div>
+        <ol id="queue-list" aria-label="Pending comments"></ol>
+        <form id="comment-form">
+          <div class="composer">
+            <textarea
+              id="comment-input"
+              placeholder="Add a comment…   Enter to send · ⇧Enter for newline"
+              rows="2"
+            ></textarea>
+            <button type="submit" id="comment-send" aria-label="Send comment">↩</button>
+          </div>
+          <span class="anchor" id="comment-anchor"></span>
+        </form>
+        <button id="send-batch" disabled>Send batch</button>
+        <div id="toast" hidden></div>
+      </aside>
+
+      <footer id="dock">
+        <div class="dock-trail">
+          <nav id="breadcrumb" aria-label="Breadcrumb"></nav>
+          <span class="trail-progress" id="tree-progress"></span>
+        </div>
+        <div class="dock-tree-wrap">
+          <div class="depth-labels" id="depth-labels" aria-hidden="true"></div>
+          <div class="dock-minimap" id="minimap" aria-label="Review minimap"></div>
+        </div>
+        <div class="dock-actions">
+          <button class="chip" data-act="prev"><kbd>←</kbd>prev</button>
+          <button class="chip" data-act="next"><kbd>→</kbd>next</button>
+          <button class="chip" data-act="up"><kbd>↑</kbd>up</button>
+          <button class="chip" data-act="down"><kbd>↓</kbd>deeper</button>
+          <span class="dock-divider"></span>
+          <button class="chip status-chip s-approved" data-act="approve"><kbd>1</kbd>approve</button>
+          <button class="chip status-chip s-changes" data-act="changes"><kbd>2</kbd>changes</button>
+          <button class="chip status-chip s-flagged" data-act="flag"><kbd>3</kbd>flag</button>
+          <button class="chip status-chip s-skip" data-act="reset"><kbd>0</kbd>reset</button>
+          <span class="dock-divider"></span>
+          <button class="chip" data-act="comment"><kbd>c</kbd>comment</button>
+          <span class="dock-spacer"></span>
+          <span class="dock-progress-text" id="dock-progress-text">0 / 0 reviewed</span>
+          <button id="finish-btn" class="primary-btn" disabled>Finish &amp; send</button>
+        </div>
+      </footer>
+    </div>
+
+    <div id="help" hidden>
+      <div class="help-card">
+        <h2>Keyboard shortcuts</h2>
+        <table>
+          <tr><td>← / h</td><td>Previous sibling</td></tr>
+          <tr><td>→ / l</td><td>Next sibling</td></tr>
+          <tr><td>↑ / k</td><td>Parent</td></tr>
+          <tr><td>↓ / j</td><td>Drill into child</td></tr>
+          <tr><td>g g</td><td>Jump to overview</td></tr>
+          <tr><td>0 / 1 / 2 / 3</td><td>Status: unreviewed / approved / needs-change / flagged</td></tr>
+          <tr><td>c · /</td><td>Focus comment</td></tr>
+          <tr><td>Enter</td><td>Add comment to batch (⇧Enter for newline)</td></tr>
+          <tr><td>⌘ / Ctrl + S</td><td>Send batch</td></tr>
+          <tr><td>?</td><td>Toggle this help</td></tr>
+          <tr><td>Esc</td><td>Close help / blur input</td></tr>
+        </table>
+        <button id="help-close" class="ghost-btn">Close</button>
+      </div>
+    </div>
+
+    <script type="module" src="/static/app.js"></script>
+  </body>
+</html>
