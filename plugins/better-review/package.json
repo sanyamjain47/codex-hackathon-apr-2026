@@ -11,7 +11,7 @@
     "build": "npm run typecheck",
     "start-review": "node scripts/start-review.mjs",
     "seed:fixture": "node scripts/seed-fixture.mjs",
-    "validate:cards": "node scripts/validate-cards.mjs",
-    "typecheck": "node --check scripts/launch-viewer.mjs && node --check scripts/start-review.mjs && node --check scripts/review-worker.mjs && node --check scripts/validate-cards.mjs && node --check scripts/seed-fixture.mjs"
+    "validate:review": "node scripts/validate-review.mjs",
+    "typecheck": "node --check scripts/launch-viewer.mjs && node --check scripts/start-review.mjs && node --check scripts/review-worker.mjs && node --check scripts/validate-review.mjs && node --check scripts/seed-fixture.mjs"
   }
 }

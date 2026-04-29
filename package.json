@@ -10,7 +10,7 @@
     "build": "npm run build --workspace plugins/better-review",
     "typecheck": "npm run typecheck --workspace plugins/better-review",
     "start-review": "npm run start-review --workspace better-review --",
-    "validate:cards": "npm run validate:cards --workspace better-review --",
+    "validate:review": "npm run validate:review --workspace better-review --",
     "seed:review-fixture": "npm run seed:fixture --workspace better-review"
   },
   "workspaces": [

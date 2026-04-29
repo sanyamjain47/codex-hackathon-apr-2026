@@ -1,44 +1,71 @@
 # Scripts
 
-This directory contains helper scripts for the BetterReview plugin.
+Helper scripts for the BetterReview plugin. Two of them are run by the user
+(directly or through the `/better-review` skill); the other two are internal.
 
-## `launch-viewer.mjs`
+## `launch-viewer.mjs` (user-facing)
 
-Reuses or starts the local static viewer on `127.0.0.1`.
+Tiny static HTTP server on `127.0.0.1:3020` (idempotent — reuses an existing
+server if one is already running). Serves the review at `/`:
 
-It prefers port `3020`. If BetterReview is already running there, it prints
-that URL and exits successfully. Otherwise, it falls back to the next available
-local port and prints the final URL using this prefix:
+- if `<repo-root>/.better-review/current/review.html` exists, that file is served
+- otherwise the editable template `examples/BetterReview-Template.html` is served
 
-```text
-BETTER_REVIEW_URL=
-```
+It also exposes:
 
-The Codex skill uses that URL when opening the viewer.
+- `GET /api/health` — `{ok: true, app: "better-review"}` (used for idempotency)
+- `GET /api/review-status` — manifest + `hasReview` flag
 
-## `start-review.mjs`
+The first stdout line of the form `BETTER_REVIEW_URL=http://127.0.0.1:<port>`
+is the URL the skill captures and opens.
 
-Resolves the current branch diff base, prepares `.better-review/current`, writes
-the review request, and starts the App Server worker in the background.
+## `start-review.mjs` (user-facing)
 
-Use dry-run mode to test branch resolution without writing a session:
+Resolves the branch diff base, prepares `.better-review/current/`, writes a
+request file with the full prompt, persists `manifest.json` in `starting`
+state, and spawns `review-worker.mjs` detached. Returns within ~1s with the
+session paths printed as JSON.
 
-```bash
-npm run start-review -- --dry-run
-```
+Flags:
 
-## `validate-cards.mjs`
+- `--target <path>` — git work tree to review. Defaults to cwd.
+- `--base <ref|sha>` — diff base. Defaults to upstream merge-base, then
+  `origin/main`, then `main`. Use this when the script can't infer a base.
+- `--dry-run` — resolve base + build the prompt, but do NOT spawn the worker.
+  Prints the resolved values as JSON. Useful for sanity checks.
 
-Validates card frontmatter and tree links:
+## `review-worker.mjs` (internal)
 
-```bash
-npm run validate:cards -- --cards-dir examples/review
-```
+Spawned by `start-review.mjs`. Talks JSON-RPC to `codex app-server --listen
+stdio://`, validates the model is available, starts a thread restricted to
+writing only inside the session directory, sends one turn with the full
+prompt, waits for completion, runs `validate-review.mjs`, and updates
+`manifest.json` to `completed` or `failed`.
 
-## `seed-fixture.mjs`
+You should never invoke this directly.
 
-Copies `examples/review` into `.better-review/current/cards` so the static UI
-can be tested without spending model calls:
+## `validate-review.mjs` (internal)
+
+Sanity-check on the `review.html` the worker produces. Asserts:
+
+- file exists and is non-trivial in size
+- the four `<!-- BEGIN/END PR_DATA -->` and `<!-- BEGIN/END DIAGRAMS -->`
+  marker comments are present, ordered, and unique
+- the inlined PR_DATA region assigns `window.PR_DATA`
+- the inlined DIAGRAMS region assigns `window.Diagram`
+- the React/ReactDOM/Babel `<script>` tags weren't accidentally removed
+- the `ReactDOM.createRoot` mount call is still present
+
+Anything more sophisticated (full JSX parse, runtime smoke) is left to the
+browser. The validator is run automatically by `review-worker.mjs` after the
+worker turn completes.
+
+## `seed-fixture.mjs` (developer aid)
+
+Copies `examples/BetterReview-Template.html` (the canonical editable
+template, complete with a sample PR_DATA mock) into `.better-review/current/`
+as `review.html`, and writes a synthetic manifest. Lets you iterate on the
+launcher / template / SKILL.md without burning Codex App Server calls.
 
 ```bash
 npm run seed:review-fixture

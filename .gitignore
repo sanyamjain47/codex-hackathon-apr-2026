@@ -10,3 +10,8 @@ pnpm-debug.log*
 yarn-debug.log*
 .docs
 Codex.local.md
+.better-review/
+
+.agents
+.claude
+.codex

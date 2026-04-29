@@ -164,10 +164,10 @@ async function validateModel(client) {
   }
 }
 
-async function validateCards(cardsDir) {
+async function validateReviewHtml(reviewHtmlPath) {
   await execFileAsync(
     process.execPath,
-    [path.join(PLUGIN_ROOT, "scripts", "validate-cards.mjs"), "--cards-dir", cardsDir],
+    [path.join(PLUGIN_ROOT, "scripts", "validate-review.mjs"), "--review-html", reviewHtmlPath],
     {
       cwd: path.resolve(PLUGIN_ROOT, "../.."),
       timeout: 20_000,
@@ -247,7 +247,7 @@ async function main() {
     });
 
     await waitForCompletion(client, threadId);
-    await validateCards(manifest.cardsDir);
+    await validateReviewHtml(manifest.reviewHtml);
     await updateManifest(args.session, {
       status: "completed",
       error: null,

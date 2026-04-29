@@ -1,402 +1,212 @@
-# Minimal frontmatter contract
+# BetterReview review-output contract
 
-Use the same lightweight frontmatter for every card:
+This is the contract the **review-worker agent** must satisfy when it produces
+a BetterReview review. It is designed to be cheap to obey and easy to verify —
+the validator (`plugins/better-review/scripts/validate-review.mjs`) checks the
+mechanical bits, the viewer renders what the agent wrote.
 
-```yaml
----
-id: change-02-stripe-webhooks
-level: 2
-title: Stripe webhook processing
-parent: overview
-order: 2
-risk: high
-confidence: medium
-status: unreviewed
-labels:
-  - correctness
-  - external-integration
-  - tests
-image: images/change-02-stripe-webhooks.png
-children:
-  - evidence-02a-webhook-handler
-  - evidence-02b-webhook-tests
----
+## TL;DR
+
+- The agent's output is a single self-contained file: `.better-review/current/review.html`.
+- That file is a copy of `examples/BetterReview-Template.html` with **only two
+  regions edited**, each marked with HTML comments:
+  - `<!-- BEGIN PR_DATA --> ... <!-- END PR_DATA -->`
+  - `<!-- BEGIN DIAGRAMS --> ... <!-- END DIAGRAMS -->`
+- Everything outside those two regions (CSS, the React App component, the
+  React/ReactDOM/Babel `<script>` tags) is byte-for-byte identical to the template.
+- The agent never edits any other file. The sandbox enforces this.
+
+## Why this shape
+
+We tried a Markdown card tree first. It worked but produced text-heavy review
+output that didn't fit the swipeable canvas the UI is built around. Switching
+to "edit the template directly" gave us:
+
+- **Visual flexibility**: the agent can author arbitrary inline SVG diagrams,
+  not just pick from a fixed set of card types.
+- **One artifact**: the file the agent writes IS the rendered page. No parser,
+  no client-side Markdown-to-HTML, no per-card fetch. Open it in any browser
+  with internet (for the React/Babel CDN tags) and it just renders.
+- **Simpler validator**: a few text-level checks instead of a YAML/Markdown
+  parse + tree integrity check.
+- **Smaller blast radius for agent mistakes**: the marked regions constrain
+  what can break.
+
+## The PR_DATA region
+
+The first region defines `window.PR_DATA`, a JS object that drives the entire
+UI. Shape:
+
+```js
+window.PR_DATA = {
+  meta: {
+    repo:          "<owner/repo>",
+    branch:        "<head branch name>",
+    base:          "<base ref>",
+    title:         "<short PR title>",
+    author:        "codex-agent",
+    authorKind:    "agent",
+    runId:         "<short opaque id>",
+    createdAt:     "just now",
+    filesChanged:  <int>,
+    additions:     <int>,
+    deletions:     <int>,
+    commits:       <int>,
+    intent:        "<2-3 sentence framing of the original ask>"
+  },
+  summary: {
+    headline: "<one-sentence overall description>",
+    bullets:  [ "<5 short bullets — what's in this PR>" ],
+    risks:    [ { level: "low" | "med" | "high", text: "<one risk per line>" } ]
+  },
+  changes: [ /* 3 to 6 conceptual changes, each shaped as below */ ]
+};
 ```
 
-That’s probably enough.
+Each `changes[i]` carries rail metadata plus exactly four ordered depth
+entries:
 
-## Field meanings
-
-```yaml
-id: stable unique card id
-level: 1 | 2 | 3
-title: display title
-parent: parent card id, null/omitted for overview
-order: reading order among siblings
-risk: low | medium | high
-confidence: low | medium | high
-status: unreviewed | approved | flagged | needs-change
-labels: flexible review tags
-image: optional image path
-children: child card ids
+```js
+{
+  id:           "<kebab-case unique slug>",
+  title:        "<3-6 words>",
+  tag:          "<2 words — e.g. 'new module', 'behaviour change', 'removal'>",
+  scope:        "<dominant directory affected, e.g. 'workers/queue/'>",
+  filesTouched: <int>,
+  additions:    <int>,
+  deletions:    <int>,
+  depths: [
+    /* depth[0] */ { kind: "summary",    label: "...", body:  "..." },
+    /* depth[1] */ { kind: "diagram",    label: "...", schema: "..." },
+    /* depth[2] */ { kind: "pseudocode", label: "...", files: [ {file, text}, ... ] },
+    /* depth[3] */ { kind: "diff",       label: "...", file: "...", hunks: [...] }
+  ]
+}
 ```
 
-That gives the UI:
+### The four prescribed depths (read carefully — order is fixed)
 
-* tree navigation
-* card ordering
-* badges
-* progress state
-* optional visuals
-* drilldown links
+Every change in the lattice has these four depths in this order. No exceptions.
 
-And it does **not** over-prescribe the content.
+#### depths[0] — summary
 
----
-
-# The 3 levels
-
-## Level 1 — Overview
-
-Purpose:
-
-> Orient the reviewer and define the recommended review path.
-
-Frontmatter:
-
-```yaml
----
-id: overview
-level: 1
-title: Review Overview
-order: 0
-risk: high
-confidence: medium
-status: unreviewed
-labels:
-  - overview
-  - review-plan
-image: images/overview.png
-children:
-  - change-01-billing-state
-  - change-02-stripe-webhooks
-  - change-03-admin-ui
----
+```js
+{ kind: "summary", label: "<short label>", body: "<one English sentence, ≤200 chars>" }
 ```
 
-Markdown body:
+The reviewer sees this first when they swipe to the change. Lead with the
+verb. Not "What this does is..." — just the thing it does.
 
-```md
-## What changed
+#### depths[1] — diagram
 
-Briefly explain the overall change in human language.
-
-## Review path
-
-1. Billing state model
-2. Stripe webhook processing
-3. Admin billing UI
-4. Tests and config
-
-## Why this order
-
-Explain why the reviewer should read it in this sequence.
-
-## Main risks
-
-- Webhook idempotency
-- State transition correctness
-- Admin route authorization
-- Test coverage gaps
-
-## Context used
-
-Mention the available spec, prompt, issue, PR description, or lack of context.
+```js
+{ kind: "diagram", label: "<short label>", schema: "<unique-name>" }
 ```
 
-The agent instruction:
+`schema` is a string identifier. The DIAGRAMS region (below) must export a
+React component for that exact schema name. The viewer's `Diagram` registry
+looks it up. Diagrams are how the reviewer sees the change in context — favour
+sequence diagrams, before/after splits, architecture sketches, state machines,
+schema tables. No clipart. No emoji. Schematic and clean.
 
-> At Level 1, do not summarize files. Summarize the change set. Identify the conceptual review path and the highest-risk areas. Use the spec/prompt/PR description when available.
+#### depths[2] — pseudocode
 
----
-
-## Level 2 — Change Card
-
-Purpose:
-
-> Explain one conceptual change deeply enough that a developer can decide whether they agree with it.
-
-Frontmatter:
-
-```yaml
----
-id: change-02-stripe-webhooks
-level: 2
-title: Stripe webhook processing
-parent: overview
-order: 2
-risk: high
-confidence: medium
-status: unreviewed
-labels:
-  - external-integration
-  - correctness
-  - idempotency
-  - tests
-image: images/change-02-sequence.png
-children:
-  - evidence-02a-webhook-handler
-  - evidence-02b-subscription-service
-  - evidence-02c-webhook-tests
----
+```js
+{
+  kind: "pseudocode",
+  label: "What changed file by file",
+  files: [
+    { file: "src/agent/index.ts", text: "Attach the new tool into the agent so it shows up in the UI." },
+    { file: "src/agent/index.test.ts", text: "Cover the new tool in the existing agent test scaffold." },
+    /* one entry per file actually touched in this conceptual change */
+  ]
+}
 ```
 
-Markdown body:
+`files` is an **array, not a string**. Each entry is `{ file, text }` where
+`text` is one or two **natural-language English sentences** describing what
+changed in that file. Not pseudo-code in the algorithm sense — pseudo-code in
+the "imagine the diff was narrated by a thoughtful engineer" sense. One entry
+per file actually touched in this conceptual change. Do not cram multiple
+files into one entry. Do not include code.
 
-```md
-## What changed
+#### depths[3] — diff
 
-Explain the conceptual change.
-
-## Why it matters
-
-Explain why a human reviewer should care.
-
-## How it works
-
-Describe the implementation flow at a high level.
-
-## Spec / intent alignment
-
-Explain whether this appears to match the provided spec, prompt, issue, or PR description.
-
-## Review questions
-
-- Is webhook handling idempotent?
-- Are out-of-order events safe?
-- Are unsupported external states handled?
-- Are error paths observable and retry-safe?
-
-## Risks
-
-### Correctness
-...
-
-### Security / data safety
-...
-
-### Maintainability
-...
-
-### Tests
-...
-
-## Evidence to inspect
-
-- Webhook handler evidence
-- Subscription service evidence
-- Webhook test evidence
+```js
+{
+  kind: "diff",
+  label: "Diff · <filename>",
+  file: "<single primary file affected>",
+  hunks: [
+    {
+      header: "@@ -42,7 +42,11 @@",
+      lines: [
+        { t: "ctx", n: "  unchanged context line" },
+        { t: "del", n: "  removed line" },
+        { t: "add", n: "  added line" }
+      ]
+    }
+    /* 1-3 hunks, ≤30 changed lines total */
+  ]
+}
 ```
 
-The agent instruction:
+`t` is `"add"` | `"del"` | `"ctx"`. Keep hunks tight — show the most
+illustrative slice, not the entire file.
 
-> At Level 2, the unit is a conceptual change, not a file. Mention files only when useful, in natural language. Do not produce a file inventory. Explain what decision the reviewer is being asked to make, why it matters, what could go wrong, and which evidence cards support the claim.
+## The DIAGRAMS region
 
----
+The second region defines `window.Diagram`, a React component that switches
+on `schema` and returns JSX. Required structure:
 
-## Level 3 — Evidence Card
+```jsx
+/* helpers — copy from the template; they handle the visual style */
+function DiagramFrame({ children, caption }) { /* ... */ }
+function Box({ x, y, w, h, label, sub, kind }) { /* ... */ }
+function Arrow({ x1, y1, x2, y2, label, dashed }) { /* ... */ }
 
-Purpose:
+/* one function per schema referenced in PR_DATA's diagram depths */
+function YourSchemaOne() { return <DiagramFrame caption="..."> /* SVG */ </DiagramFrame>; }
+function YourSchemaTwo() { return <DiagramFrame caption="..."> /* SVG */ </DiagramFrame>; }
 
-> Prove the Level 2 explanation with concrete code evidence.
-
-This is the only level where file-level specificity belongs.
-
-Frontmatter:
-
-```yaml
----
-id: evidence-02a-webhook-handler
-level: 3
-title: Evidence: webhook handler
-parent: change-02-stripe-webhooks
-order: 1
-risk: high
-confidence: high
-status: unreviewed
-labels:
-  - diff
-  - webhook
-  - code-evidence
-image:
-children: []
----
+function Diagram({ schema }) {
+  switch (schema) {
+    case "your-schema-one": return <YourSchemaOne />;
+    case "your-schema-two": return <YourSchemaTwo />;
+    default: return <DiagramFrame caption="diagram" />;
+  }
+}
+window.Diagram = Diagram;
 ```
 
-Markdown body:
+Helpers (`DiagramFrame`, `Box`, `Arrow`) are reusable building blocks defined
+in the existing template — copy them through unchanged unless you have a
+specific reason. Diagrams render at viewBox `0 0 720 420`. The CSS provides
+useful classes (`dgm-label`, `dgm-sub`, `dgm-edge`, `dgm-section`,
+`dgm-mono`).
 
-````md
-## What this evidence shows
+## What the agent must NOT do
 
-Explain what this file/hunk proves about the parent change.
+- Do not edit the file outside the two BEGIN/END marker pairs.
+- Do not introduce new top-level `<script>` tags. If you need helpers, define
+  them inside one of the two existing inline scripts.
+- Do not strip the React/ReactDOM/Babel CDN script tags.
+- Do not pre-compile JSX. Babel-standalone compiles it at load time.
+- Do not use external image URLs. All visuals are inline SVG.
+- Do not edit any source files in the repo. The sandbox is configured to
+  forbid writes outside `.better-review/current/`.
 
-## Relevant code
+## Validation
 
-### Failed invoice handling
+The worker runs `validate-review.mjs` automatically after writing
+`review.html`. It checks:
 
-```diff
-+ case "invoice.payment_failed":
-+   await billingService.markPastDue(subscriptionId)
-```
+1. The file exists and is at least 10KB.
+2. Both BEGIN/END marker pairs are present, ordered, and each appears once.
+3. The PR_DATA region assigns `window.PR_DATA` and is at least 500 chars.
+4. The DIAGRAMS region assigns `window.Diagram` and is at least 500 chars.
+5. The CDN library tags and `ReactDOM.createRoot` mount call are still
+   present.
 
-Why this matters:
-This is where failed payment events start mutating internal subscription state.
-
-Reviewer should verify:
-The event has been deduplicated before this side effect runs.
-
-### Subscription update handling
-
-```diff
-+ case "customer.subscription.updated":
-+   await billingService.syncStatus(subscriptionId, stripeStatus)
-```
-
-Why this matters:
-This maps external Stripe lifecycle state into the internal domain model.
-
-Reviewer should verify:
-Unsupported Stripe states are handled explicitly.
-
-## Open questions
-
-- Is signature verification done before this point?
-- Is event ID persistence atomic with side effects?
-- Are retries safe?
-````
-
-The agent instruction:
-
-> At Level 3, be precise. Show only the code evidence needed to support the parent card. Include relevant hunks, explain why each hunk matters, and state what the reviewer should verify. Avoid restating the full Level 2 summary.
-
----
-
-# Recommended labels
-
-Keep labels flexible, but give the agent a suggested vocabulary:
-
-```yaml
-labels:
-  - architecture
-  - correctness
-  - security
-  - auth
-  - data-model
-  - migration
-  - external-integration
-  - api-contract
-  - ui
-  - tests
-  - config
-  - maintainability
-  - performance
-  - observability
-  - generated
-  - low-risk
-```
-
-This is better than many structured fields. It gives the UI enough to render badges and filters without forcing the agent into a rigid schema.
-
----
-
-# The important simplification
-
-Remove these from frontmatter:
-
-```yaml
-files:
-spec_alignment:
-review_focus:
-hunks:
-symbols:
-raw_diff_ref:
-agent_confidence_reason:
-```
-
-Those are useful ideas, but they belong in markdown body, not YAML.
-
-The agent can still say:
-
-```md
-## Spec / intent alignment
-
-This matches the billing lifecycle spec around syncing subscription state from Stripe, but the spec does not explicitly mention idempotency.
-```
-
-That is much more natural and less likely to distort the abstraction.
-
----
-
-# The contract I’d give Codex
-
-```text
-Generate a 3-level review tree using markdown files with lightweight YAML frontmatter.
-
-The three levels are:
-
-Level 1: Review Overview
-- Summarize the overall change.
-- Recommend the order in which a human should review it.
-- Identify major risks and context used.
-- Do not summarize files one by one.
-
-Level 2: Change Card
-- Each card represents one conceptual change.
-- Explain what changed, why it matters, how it works, alignment with the spec/prompt, risks, review questions, and evidence to inspect.
-- Do not make files the primary unit.
-- Mention files only naturally when they help explain the change.
-
-Level 3: Evidence Card
-- Each card provides concrete code evidence for one parent Change Card.
-- This can be file-level or hunk-level.
-- Include relevant diff snippets, why they matter, and what the reviewer should verify.
-- Do not include unrelated hunks.
-
-Use frontmatter only for UI metadata:
-id, level, title, parent, order, risk, confidence, status, labels, image, children.
-
-Use markdown body for all semantic review content.
-
-Every important Level 1 or Level 2 claim should be supported by one or more Level 3 evidence cards.
-Prefer fewer, higher-quality cards over many shallow cards.
-```
-
----
-
-# The resulting product shape
-
-```text
-Overview
-  ├── Change: Billing state model
-  │     ├── Evidence: schema changes
-  │     └── Evidence: state transition logic
-  │
-  ├── Change: Stripe webhook processing
-  │     ├── Evidence: webhook handler
-  │     ├── Evidence: subscription service
-  │     └── Evidence: webhook tests
-  │
-  └── Change: Admin billing UI
-        ├── Evidence: dashboard page
-        └── Evidence: status badge component
-```
-
-The UI remains simple:
-
-```text
-Tree metadata comes from frontmatter.
-Review content comes from markdown.
-Code trust comes from Level 3 evidence.
-```
-
-This keeps the architecture clean without overfitting the agent to files.
+If validation fails, the manifest flips to `status: "failed"` with the error.
+The viewer surfaces this state, and `worker.log` has the full trace.

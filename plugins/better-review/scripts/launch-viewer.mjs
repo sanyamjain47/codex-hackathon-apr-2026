@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { createServer } from "node:http";
-import { readFile, readdir } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,9 +14,9 @@ const MAX_PORT_ATTEMPTS = Number.parseInt(
 const PLUGIN_ROOT = fileURLToPath(new URL("../", import.meta.url));
 const REPO_ROOT = path.resolve(PLUGIN_ROOT, "../..");
 const TARGET_ROOT = path.resolve(process.env.BETTER_REVIEW_TARGET ?? REPO_ROOT);
-const VIEWER_INDEX = path.join(REPO_ROOT, "examples", "BetterReview-Sample-UI.html");
+const TEMPLATE_INDEX = path.join(REPO_ROOT, "examples", "BetterReview-Template.html");
 const REVIEW_ROOT = path.join(TARGET_ROOT, ".better-review", "current");
-const CARDS_DIR = path.join(REVIEW_ROOT, "cards");
+const REVIEW_HTML = path.join(REVIEW_ROOT, "review.html");
 
 function isPortAvailable(port) {
   return new Promise((resolve) => {
@@ -81,22 +81,18 @@ async function readJsonIfPresent(filePath) {
   }
 }
 
-async function listCards() {
+async function reviewHtmlExists() {
   try {
-    const entries = await readdir(CARDS_DIR, { withFileTypes: true });
-
-    return entries
-      .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
-      .map((entry) => entry.name)
-      .sort();
+    await readFile(REVIEW_HTML, "utf8");
+    return true;
   } catch {
-    return [];
+    return false;
   }
 }
 
 async function buildReviewStatus() {
   const manifest = await readJsonIfPresent(path.join(REVIEW_ROOT, "manifest.json"));
-  const cards = await listCards();
+  const hasReview = await reviewHtmlExists();
 
   return {
     ok: true,
@@ -106,9 +102,8 @@ async function buildReviewStatus() {
       : "No BetterReview session has started yet.",
     targetRoot: TARGET_ROOT,
     reviewRoot: REVIEW_ROOT,
-    cardsDir: CARDS_DIR,
-    cardCount: cards.length,
-    cards,
+    reviewHtml: REVIEW_HTML,
+    hasReview,
     manifest
   };
 }
@@ -135,11 +130,15 @@ async function handleRequest(request, response) {
   }
 
   if (request.method === "GET" && requestUrl.pathname === "/") {
+    // Prefer the agent's generated review.html when present; otherwise fall
+    // back to the editable template (which includes a sample PR_DATA so the
+    // user sees a real UI even before any review has run).
+    const sourcePath = (await reviewHtmlExists()) ? REVIEW_HTML : TEMPLATE_INDEX;
     response.writeHead(200, {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "no-store"
     });
-    response.end(await readFile(VIEWER_INDEX, "utf8"));
+    response.end(await readFile(sourcePath, "utf8"));
     return;
   }
 

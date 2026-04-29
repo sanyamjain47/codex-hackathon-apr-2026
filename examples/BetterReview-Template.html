@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BetterReview · Codex PR</title>
+  <style>
+:root {
+  --ink:        oklch(0.16 0.012 70);
+  --ink-2:      oklch(0.28 0.010 70);
+  --ink-soft:   oklch(0.55 0.008 70);
+  --ink-mute:   oklch(0.70 0.006 70);
+  --paper:      oklch(0.965 0.008 80);
+  --paper-2:    oklch(0.945 0.010 80);
+  --paper-3:    oklch(0.91  0.012 80);
+  --canvas:     oklch(0.92  0.010 78);
+  --canvas-deep: oklch(0.86  0.012 76);
+
+  --accent:     oklch(0.78 0.16 145);
+  --accent-ink: oklch(0.42 0.12 145);
+  --accent-soft: oklch(0.93 0.05 145);
+
+  --warn:       oklch(0.72 0.14 65);
+  --warn-soft:  oklch(0.94 0.05 65);
+  --danger:     oklch(0.58 0.16 25);
+  --danger-soft: oklch(0.93 0.05 25);
+
+  --shadow-card: 0 1px 0 oklch(0 0 0 / 0.04), 0 12px 28px -10px oklch(0 0 0 / 0.18), 0 2px 6px -2px oklch(0 0 0 / 0.10);
+  --shadow-deep: 0 24px 60px -22px oklch(0 0 0 / 0.30);
+
+  --radius: 14px;
+  --radius-sm: 8px;
+
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-serif: "Fraunces", Georgia, serif;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: var(--canvas);
+  background-image:
+    radial-gradient(circle at 1px 1px, oklch(0 0 0 / 0.07) 1px, transparent 0);
+  background-size: 22px 22px;
+  background-position: -1px -1px;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.005em;
+}
+
+button { font-family: inherit; color: inherit; cursor: pointer; }
+code, pre, kbd { font-family: var(--font-mono); }
+kbd {
+  font-size: 11px;
+  padding: 2px 6px;
+  border: 1px solid var(--ink-soft);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--paper);
+}
+
+/* ---------- app shell ---------- */
+.app {
+  height: 100vh;
+  display: grid;
+  grid-template-rows: 56px 1fr 88px;
+}
+
+/* ---------- topbar ---------- */
+.topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 18px;
+  border-bottom: 1px solid oklch(0 0 0 / 0.08);
+  background: oklch(0.93 0.010 80 / 0.85);
+  backdrop-filter: blur(10px);
+  z-index: 5;
+}
+.topbar-l { justify-self: start; }
+.topbar-c { justify-self: center; }
+.topbar-r { justify-self: end; display: flex; gap: 14px; align-items: center; }
+
+.brand {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: none; border: 0; padding: 4px 8px; border-radius: 8px;
+}
+.brand:hover { background: oklch(0 0 0 / 0.04); }
+.brand-mark {
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  background: var(--ink); color: var(--paper);
+  border-radius: 6px;
+}
+.brand-name { font-weight: 600; letter-spacing: -0.01em; font-size: 15px; }
+.brand-sub { color: var(--ink-soft); font-family: var(--font-mono); font-size: 12px; }
+
+.crumbs { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink-soft); }
+.crumb-active { color: var(--ink); font-weight: 500; }
+.crumb-mono { font-family: var(--font-mono); font-size: 12px; padding: 1px 6px; background: var(--paper); border: 1px solid oklch(0 0 0 / 0.08); border-radius: 4px; }
+.crumb-sep { color: var(--ink-mute); }
+
+.counters { display: flex; gap: 12px; font-size: 12px; }
+.counter { display: inline-flex; gap: 6px; align-items: center; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.dot-approve { background: var(--accent); }
+.dot-changes { background: var(--warn); }
+.dot-skip    { background: var(--ink-mute); }
+
+.agent-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 5px 10px;
+  border: 1px solid oklch(0 0 0 / 0.10);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--paper);
+}
+.agent-dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 0 3px var(--accent-soft); }
+
+/* ---------- stage / canvas ---------- */
+.stage { position: relative; overflow: hidden; }
+.canvas-clip {
+  position: absolute; inset: 0;
+  overflow: hidden;
+}
+.canvas {
+  position: absolute; inset: 0;
+  transition: transform 480ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.col {
+  position: absolute; top: 0;
+  width: 100vw; height: 100%;
+  overflow: hidden;
+}
+.col-stack {
+  position: absolute; inset: 0;
+  transition: transform 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cell {
+  position: absolute;
+  left: 0; right: 0;
+  height: 100%;
+  padding: 18px 200px 18px 32px;
+  display: grid;
+  place-items: stretch;
+  transition: opacity 300ms ease, transform 300ms ease, filter 300ms ease;
+}
+.cell:not(.cell-focus) {
+  opacity: 0.35;
+  filter: blur(1px);
+  transform: scale(0.98);
+}
+
+/* ---------- card chrome ---------- */
+.card {
+  position: relative;
+  background: var(--paper);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  border: 1px solid oklch(0 0 0 / 0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.card-edge {
+  position: absolute; top: 0; left: 0; right: 0;
+  padding: 8px 18px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  background: var(--paper-2);
+  border-bottom: 1px solid oklch(0 0 0 / 0.06);
+  display: flex; gap: 8px; align-items: center;
+}
+.edge-sep { color: var(--ink-mute); }
+.edge-kind { padding: 0 6px; background: var(--paper); border: 1px solid oklch(0 0 0 / 0.08); border-radius: 3px; }
+
+/* ---------- overview card ---------- */
+.card-overview { padding: 36px 44px 18px; min-height: 0; overflow: hidden; }
+.ov-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    "head     bullets  risks"
+    "howto    howto    howto";
+  gap: 16px 36px;
+  align-content: start;
+  height: 100%;
+  min-height: 0;
+}
+.ov-head    { grid-area: head;    min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.ov-headline { display: none; }
+.ov-intent-col { display: none; }
+.ov-bullets { grid-area: bullets; min-width: 0; min-height: 0; overflow: hidden; padding-left: 24px; border-left: 1px dashed oklch(0 0 0 / 0.12); display: flex; flex-direction: column; }
+.ov-risks   { grid-area: risks;   min-width: 0; min-height: 0; overflow: hidden; padding-left: 24px; border-left: 1px dashed oklch(0 0 0 / 0.12); display: flex; flex-direction: column; }
+.ov-howto   { grid-area: howto;   padding-top: 12px; border-top: 1px dashed oklch(0 0 0 / 0.12); }
+
+.ov-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 4px;
+  margin-bottom: 18px;
+}
+.ov-title {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: clamp(28px, 2.6vw, 38px);
+  line-height: 1.04;
+  letter-spacing: -0.022em;
+  margin: 6px 0 0;
+  text-wrap: balance;
+  max-width: 26ch;
+}
+.ov-intent {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--ink);
+  margin: 8px 0 0;
+  text-wrap: pretty;
+  letter-spacing: -0.005em;
+}
+
+.ov-meta {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+.ov-meta > div { display: flex; align-items: baseline; gap: 6px; }
+.ov-meta code { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+.ov-meta label { font-family: var(--font-mono); font-size: 9.5px; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.06em; }
+.ov-meta label { font-family: var(--font-mono); margin-right: 8px; opacity: 0.7; }
+.ov-meta code { color: var(--ink); font-size: 12px; }
+.add { color: var(--accent-ink); }
+.del { color: var(--danger); }
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.10em;
+  color: var(--ink-soft);
+  margin-bottom: 10px;
+}
+.ov-headline h2 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.2;
+  margin: 0;
+  letter-spacing: -0.01em;
+  text-wrap: pretty;
+}
+
+.ov-bullets ol { margin: 8px 0 0; padding: 0; list-style: none; counter-reset: b; }
+.ov-bullets li {
+  counter-increment: b;
+  padding: 5px 0 5px 26px;
+  border-top: 1px solid oklch(0 0 0 / 0.06);
+  font-size: 11.5px; line-height: 1.4;
+  position: relative;
+}
+.ov-bullets li::before {
+  content: counter(b, decimal-leading-zero);
+  position: absolute; left: 0; top: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px; color: var(--ink-soft);
+}
+.ov-bullets li:last-child { border-bottom: 1px solid oklch(0 0 0 / 0.06); }
+
+.ov-risks ul { margin: 8px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr; gap: 5px 0; }
+.risk { display: grid; grid-template-columns: 40px 1fr; gap: 8px; padding: 3px 0; font-size: 11px; line-height: 1.35; align-items: start; }
+.risk-badge {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-align: center;
+  height: fit-content;
+}
+.risk-low  .risk-badge { background: var(--paper-3); color: var(--ink-2); }
+.risk-med  .risk-badge { background: var(--warn-soft); color: oklch(0.42 0.12 65); }
+.risk-high .risk-badge { background: var(--danger-soft); color: var(--danger); }
+
+.howto-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.howto-grid > div { display: flex; gap: 10px; align-items: center; }
+
+/* ---------- change card (with persistent rail) ---------- */
+.card-change {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* persistent left rail — stable across depth levels */
+.ch-rail {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 22px;
+  padding: 28px 22px 22px;
+  background: var(--paper-2);
+  border-right: 1px solid oklch(0 0 0 / 0.08);
+  min-width: 0;
+}
+
+.rail-top { display: flex; flex-direction: column; min-width: 0; }
+.rail-num {
+  display: flex; align-items: baseline; gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-bottom: 14px;
+}
+.rn-cur { font-size: 22px; color: var(--ink); font-weight: 600; letter-spacing: -0.02em; }
+.rn-sep { color: var(--ink-mute); }
+
+.rail-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 3px;
+  margin-bottom: 10px;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+.rail-title {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 26px;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  margin: 0 0 12px;
+  text-wrap: balance;
+}
+.rail-scope code {
+  font-size: 11.5px;
+  color: var(--ink-2);
+  background: var(--paper);
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid oklch(0 0 0 / 0.08);
+}
+.rail-stats {
+  margin-top: 10px;
+  display: flex; gap: 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.rail-stats em { font-style: normal; color: var(--ink-soft); font-size: 10.5px; }
+
+.rail-mid { display: flex; flex-direction: column; gap: 10px; }
+.rail-kicker {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.10em;
+  color: var(--ink-soft);
+}
+.rail-ladder { display: flex; flex-direction: column; gap: 4px; }
+.rl-step {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  position: relative;
+  border: 1px solid transparent;
+}
+.rl-num { font-weight: 500; opacity: 0.6; }
+.rl-name { letter-spacing: 0.02em; }
+.rl-step.rl-passed { color: var(--accent-ink); }
+.rl-step.rl-passed .rl-num { color: var(--accent-ink); opacity: 1; }
+.rl-step.rl-active {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.rl-step.rl-active .rl-num { color: var(--paper); opacity: 1; font-weight: 600; }
+
+.rail-hint {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr;
+  gap: 6px 8px;
+  align-items: center;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+}
+
+.rail-bot { display: flex; flex-direction: column; gap: 8px; }
+.rail-decision {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 10px 12px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid transparent;
+}
+.rail-decision-pending  { background: var(--paper); color: var(--ink-soft); border-color: oklch(0 0 0 / 0.10); border-style: dashed; }
+.rail-decision-approved { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent-ink); }
+.rail-decision-changes  { background: var(--warn-soft); color: oklch(0.42 0.12 65); border-color: oklch(0.55 0.14 65); }
+.rail-decision-skipped  { background: var(--paper-3); color: var(--ink-soft); border-color: oklch(0 0 0 / 0.10); }
+
+/* ---------- stage (right side, where the visual goes) ---------- */
+.ch-stage {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 14px;
+  padding: 22px 28px 24px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.ch-stagehead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.depth-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.10em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+}
+.ch-depth-pill {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  padding: 3px 8px;
+  background: var(--paper-2);
+  border: 1px solid oklch(0 0 0 / 0.08);
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+}
+
+.ch-body { min-height: 0; min-width: 0; display: flex; flex-direction: column; }
+.depth { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
+
+/* summary becomes a tight tagline on the stage */
+.depth-summary {
+  display: grid;
+  place-items: center;
+  background: var(--paper-2);
+  border: 1px solid oklch(0 0 0 / 0.06);
+  border-radius: var(--radius-sm);
+  padding: 32px;
+}
+.depth-prose {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(22px, 2.4vw, 32px);
+  line-height: 1.32;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+  max-width: 28ch;
+  text-wrap: balance;
+  text-align: center;
+  margin: 0;
+}
+
+.depth-file { margin-bottom: 10px; }
+.depth-file code { font-size: 11px; padding: 2px 8px; background: var(--paper-2); border: 1px solid oklch(0 0 0 / 0.08); border-radius: 4px; color: var(--ink-2); }
+
+.depth-diagram { min-height: 0; flex: 1; }
+
+.dgm-wrap { width: 100%; height: 100%; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.dgm-svg { width: 100%; height: 100%; flex: 1; min-height: 0; background: var(--paper-2); border: 1px solid oklch(0 0 0 / 0.06); border-radius: var(--radius-sm); }
+.dgm-cap { font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); }
+.dgm-label { font-family: var(--font-sans); font-size: 13px; font-weight: 500; }
+.dgm-sub   { font-family: var(--font-sans); font-size: 11.5px; }
+.dgm-mono  { font-family: var(--font-mono); font-size: 11px; }
+.dgm-edge  { font-family: var(--font-mono); font-size: 10.5px; fill: var(--ink-soft); }
+.dgm-section { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.10em; fill: var(--ink-soft); }
+
+/* pseudocode */
+.pseudo {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.65;
+  background: var(--paper-2);
+  border: 1px solid oklch(0 0 0 / 0.06);
+  border-radius: var(--radius-sm);
+  padding: 22px 26px;
+  margin: 0;
+  white-space: pre;
+  overflow: auto;
+  color: var(--ink);
+}
+
+/* diff */
+.diff {
+  background: var(--paper-2);
+  border: 1px solid oklch(0 0 0 / 0.06);
+  border-radius: var(--radius-sm);
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.hunk-head {
+  padding: 6px 14px;
+  background: var(--paper-3);
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  border-bottom: 1px solid oklch(0 0 0 / 0.06);
+}
+.dl { display: grid; grid-template-columns: 28px 1fr; padding: 0 8px; }
+.dl-add { background: oklch(0.95 0.05 145); }
+.dl-del { background: oklch(0.95 0.04 25); }
+.dl-gutter { color: var(--ink-soft); text-align: center; user-select: none; }
+.dl-add .dl-gutter { color: var(--accent-ink); }
+.dl-del .dl-gutter { color: var(--danger); }
+.dl-text { white-space: pre; }
+
+/* ladder */
+.ch-foot {
+  border-top: 1px dashed oklch(0 0 0 / 0.12);
+  padding-top: 14px;
+}
+.ladder { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.ladder-cap { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; color: var(--ink-soft); }
+.ladder-step {
+  display: inline-flex; gap: 6px; align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--paper-2);
+  border: 1px solid oklch(0 0 0 / 0.08);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+.ladder-num { font-weight: 600; color: var(--ink); }
+.ladder-passed { opacity: 0.5; }
+.ladder-active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.ladder-active .ladder-num { color: var(--paper); }
+.ladder-hint { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-mute); margin-left: auto; }
+
+/* ---------- action rail ---------- */
+.rail {
+  position: absolute;
+  right: 18px; top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 4;
+}
+.rail-depth {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: var(--paper);
+  border: 1px solid oklch(0 0 0 / 0.10);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-soft);
+  box-shadow: var(--shadow-card);
+}
+.rail-depth:disabled { opacity: 0.35; cursor: not-allowed; }
+.rail-decisions {
+  display: flex; flex-direction: column;
+  background: var(--paper);
+  border: 1px solid oklch(0 0 0 / 0.10);
+  border-radius: 14px;
+  padding: 8px;
+  gap: 4px;
+  box-shadow: var(--shadow-deep);
+}
+.rail-btn {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px 12px 10px;
+  border: 0;
+  background: transparent;
+  border-radius: 10px;
+  text-align: left;
+  font-size: 13.5px;
+  color: var(--ink);
+  transition: background 120ms ease, transform 120ms ease;
+}
+.rail-btn:hover { background: var(--paper-2); }
+.rail-btn .rail-key {
+  display: grid; place-items: center;
+  width: 24px; height: 24px;
+  border-radius: 6px;
+  background: var(--paper-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+.rail-approve.is-active { background: var(--accent-soft); color: var(--accent-ink); }
+.rail-approve.is-active .rail-key { background: var(--accent); color: var(--paper); }
+.rail-changes.is-active { background: var(--warn-soft); color: oklch(0.42 0.12 65); }
+.rail-changes.is-active .rail-key { background: var(--warn); color: var(--paper); }
+.rail-skip.is-active    { background: var(--paper-3); color: var(--ink); }
+
+/* ---------- footbar ---------- */
+.footbar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 14px 22px;
+  gap: 24px;
+  border-top: 1px solid oklch(0 0 0 / 0.08);
+  background: oklch(0.93 0.010 80 / 0.85);
+  backdrop-filter: blur(10px);
+  z-index: 5;
+}
+.footbar-r { display: flex; align-items: center; gap: 16px; }
+.progress-line { width: 220px; height: 4px; background: var(--paper-3); border-radius: 999px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent); transition: width 320ms ease; }
+.progress-text { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-soft); white-space: nowrap; }
+
+/* ---------- minimap ---------- */
+.minimap {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 6px 10px;
+  align-items: center;
+}
+.mm-axis {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.10em;
+  color: var(--ink-mute);
+}
+.mm-axis-x { grid-column: 2; grid-row: 1; }
+.mm-axis-y { grid-column: 1; grid-row: 2; writing-mode: vertical-rl; transform: rotate(180deg); }
+.mm-grid {
+  grid-column: 2; grid-row: 2;
+  display: grid; gap: 4px;
+}
+.mm-col { display: flex; flex-direction: column; gap: 3px; }
+.mm-cell {
+  width: 100%;
+  height: 8px;
+  border: 1px solid oklch(0 0 0 / 0.14);
+  background: var(--paper);
+  border-radius: 2px;
+  padding: 0;
+}
+.mm-cell:hover { border-color: var(--ink); }
+.mm-active { background: var(--ink); border-color: var(--ink); }
+.mm-approved  { background: var(--accent); border-color: var(--accent-ink); }
+.mm-changes   { background: var(--warn); border-color: oklch(0.55 0.14 65); }
+.mm-skipped   { background: var(--ink-mute); border-color: var(--ink-soft); }
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  transition: transform 120ms ease, background 120ms ease;
+}
+.btn-primary { background: var(--ink); color: var(--paper); }
+.btn-primary:hover { background: oklch(0.10 0.012 70); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(--ink); border-color: oklch(0 0 0 / 0.12); }
+.btn-ghost:hover { background: var(--paper); }
+.btn-sm { padding: 7px 12px; font-size: 12px; }
+.btn-sub { font-family: var(--font-mono); font-size: 11px; opacity: 0.7; margin-left: 4px; }
+
+/* ---------- finish overlay ---------- */
+.overlay {
+  position: fixed; inset: 0;
+  background: oklch(0 0 0 / 0.32);
+  backdrop-filter: blur(6px);
+  display: grid; place-items: center;
+  z-index: 50;
+  animation: fade 180ms ease;
+}
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.finish {
+  width: min(560px, 92vw);
+  background: var(--paper);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: var(--shadow-deep);
+  animation: pop 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes pop { from { transform: translateY(8px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
+.finish-head h2 { font-family: var(--font-serif); font-weight: 500; font-size: 24px; margin: 6px 0 0; letter-spacing: -0.01em; }
+.finish-list { list-style: none; margin: 22px 0; padding: 0; border-top: 1px solid oklch(0 0 0 / 0.08); }
+.finish-row {
+  display: grid;
+  grid-template-columns: 16px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid oklch(0 0 0 / 0.06);
+  font-size: 14px;
+}
+.finish-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-mute); }
+.finish-approved .finish-dot { background: var(--accent); }
+.finish-changes .finish-dot  { background: var(--warn); }
+.finish-skipped .finish-dot  { background: var(--ink-mute); }
+.finish-pending .finish-dot  { background: transparent; border: 1px dashed var(--ink-mute); }
+.finish-state { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.06em; }
+.finish-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* ---------- toast ---------- */
+.toast {
+  position: fixed;
+  bottom: 110px; left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex; gap: 10px; align-items: center;
+  background: var(--ink); color: var(--paper);
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  box-shadow: var(--shadow-deep);
+  z-index: 30;
+  animation: pop 220ms ease;
+}
+.toast button { background: transparent; border: 0; color: var(--paper); opacity: 0.6; font-size: 16px; }
+.toast-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 0 3px oklch(0.78 0.16 145 / 0.3); }
+
+/* BetterReview · pseudocode-by-files (β template addition) */
+.pseudo-row { padding: 14px 18px; border-bottom: 1px solid var(--paper-3); }
+.pseudo-row:last-child { border-bottom: none; }
+.pseudo-row-file { font: 500 12px/1.2 var(--font-mono); color: var(--ink-soft); margin-bottom: 8px; }
+.pseudo-row-file code { background: var(--paper-2); padding: 2px 6px; border-radius: 4px; }
+.pseudo-row-text { font: 400 15px/1.55 var(--font-sans); color: var(--ink-2); }
+
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!--
+    BetterReview - single-file editable template.
+
+    Two regions are designed for the review-worker agent to replace per PR.
+    Look for the BEGIN/END marker pairs (HTML comments) below:
+      1. PR_DATA      - the data driving the review tree
+      2. DIAGRAMS     - the inline SVG diagram registry referenced by PR_DATA
+    Everything else (CSS, App component, library tags) stays untouched. The
+    agent's contract is documented in docs/contract.md.
+  -->
+
+  <!-- React + ReactDOM + Babel runtime. Loaded from CDN; no build step. -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- BEGIN PR_DATA -->
+  <script type="text/babel" data-presets="env,react" data-type="module" id="pr-data">
+
+// BetterReview · sample PR_DATA (template)
+// Replaced in full when a real review is generated. Shape contract:
+//   - meta: PR metadata (repo, branch, title, author, run, file/line stats)
+//   - summary: one card — headline + bullets + risk signals
+//   - changes[]: 3-6 conceptual changes; every change has EXACTLY these 4 depths
+//                in this order: summary → diagram → pseudocode → diff.
+window.PR_DATA = {
+  meta: {
+    repo: "acme/payments-core",
+    branch: "codex/feat-retry-queue",
+    base: "main",
+    title: "Add durable retry queue for webhook delivery",
+    author: "codex-agent",
+    authorKind: "agent",
+    runId: "cdx_01HZK9F3PMNRXQ4",
+    createdAt: "2 hours ago",
+    filesChanged: 14,
+    additions: 612,
+    deletions: 187,
+    commits: 9,
+    intent: "Webhook deliveries currently retry inline with exponential backoff inside the request handler. Under load this blocks the API thread and loses retries on process restart. The agent was asked to extract retry into a durable queue with at-least-once semantics, persist attempts, and expose ops controls."
+  },
+
+  summary: {
+    headline: "Webhook retries move from inline backoff to a durable queue",
+    bullets: [
+      "New WebhookDeliveryQueue persists attempts in Postgres (table: webhook_attempts)",
+      "Worker processes drain the queue with concurrency 8, configurable via env",
+      "Inline retry path in /webhooks/dispatch removed — handler now enqueues and returns 202",
+      "Three new admin endpoints to inspect, requeue, and dead-letter attempts",
+      "14 files changed across api/, workers/, db/migrations/, and ops dashboard"
+    ],
+    risks: [
+      { level: "med",  text: "Migration adds column with non-null default — safe but locks table briefly" },
+      { level: "low",  text: "Queue ordering is FIFO per-tenant, not global. Confirm this matches expectations." },
+      { level: "high", text: "Removed legacy /webhooks/replay endpoint — breaking for existing ops scripts" }
+    ]
+  },
+
+  changes: [
+    {
+      id: "queue-core",
+      title: "Durable queue core",
+      tag: "new module",
+      scope: "workers/queue/",
+      filesTouched: 4,
+      additions: 287,
+      deletions: 0,
+      depths: [
+        { kind: "summary",   label: "What it does",
+          body: "A new per-tenant FIFO queue persists webhook attempts in Postgres so workers can claim them concurrently with SKIP LOCKED." },
+        { kind: "diagram",   label: "Architecture",
+          schema: "tenant-fifo-queue" },
+        { kind: "pseudocode", label: "What changed file by file",
+          files: [
+            { file: "workers/queue/queue.ts",       text: "New WebhookDeliveryQueue class with enqueue / claim / ack / nack methods backed by the webhook_attempts table." },
+            { file: "workers/queue/types.ts",       text: "Defines the Attempt type that flows between handler, queue, and worker." },
+            { file: "workers/queue/index.ts",       text: "Public surface — exports the queue and types so the rest of the app can import them." },
+            { file: "workers/queue/queue.test.ts",  text: "Round-trip tests for enqueue → claim → ack and concurrent claim under contention." }
+          ] },
+        { kind: "diff",      label: "Diff · queue.ts",
+          file: "workers/queue/queue.ts",
+          hunks: [
+            { header: "@@ new file +1,40 @@",
+              lines: [
+                { t: "add", n: "import { db } from '../../db'" },
+                { t: "add", n: "import { Logger } from '../../obs/logger'" },
+                { t: "add", n: "" },
+                { t: "add", n: "export type Attempt = {" },
+                { t: "add", n: "  id: string" },
+                { t: "add", n: "  tenantId: string" },
+                { t: "add", n: "  payload: unknown" },
+                { t: "add", n: "  attempt: number" },
+                { t: "add", n: "  notBefore: Date" },
+                { t: "add", n: "}" },
+                { t: "add", n: "" },
+                { t: "add", n: "export class WebhookDeliveryQueue {" },
+                { t: "add", n: "  constructor(private log: Logger) {}" },
+                { t: "add", n: "" },
+                { t: "add", n: "  async enqueue(tenantId: string, payload: unknown) {" },
+                { t: "add", n: "    return db.tx(async t => {" },
+                { t: "add", n: "      const id = await t.one(" },
+                { t: "add", n: "        `INSERT INTO webhook_attempts" },
+                { t: "add", n: "         (tenant_id, payload, state, not_before)" },
+                { t: "add", n: "         VALUES ($1,$2,'pending',now())" },
+                { t: "add", n: "         RETURNING id`," },
+                { t: "add", n: "        [tenantId, payload]" },
+                { t: "add", n: "      )" },
+                { t: "add", n: "      this.log.info('enqueued', { id, tenantId })" },
+                { t: "add", n: "      return id" },
+                { t: "add", n: "    })" },
+                { t: "add", n: "  }" },
+                { t: "add", n: "}" }
+              ] }
+          ] }
+      ]
+    },
+
+    {
+      id: "dispatch-rewrite",
+      title: "Dispatch handler now enqueues",
+      tag: "behavior change",
+      scope: "api/webhooks/",
+      filesTouched: 2,
+      additions: 41,
+      deletions: 118,
+      depths: [
+        { kind: "summary",   label: "What changed",
+          body: "The dispatch handler stops retrying inline; it validates, enqueues, and returns 202 in ~22ms instead of blocking the API thread for ~1.8s." },
+        { kind: "diagram",   label: "Before vs after",
+          schema: "before-after-dispatch" },
+        { kind: "pseudocode", label: "What changed file by file",
+          files: [
+            { file: "api/webhooks/dispatch.ts",       text: "Removed the 30-second inline backoff loop. Now signs the payload, calls queue.enqueue(), and replies 202 with the attempt id." },
+            { file: "api/webhooks/dispatch.test.ts",  text: "Updated tests: dispatch no longer asserts retry behavior; new test confirms a 202 with attempt id is returned." }
+          ] },
+        { kind: "diff",      label: "Diff · dispatch.ts",
+          file: "api/webhooks/dispatch.ts",
+          hunks: [
+            { header: "@@ -42,38 +42,11 @@ export async function dispatch(req, res) {",
+              lines: [
+                { t: "ctx", n: "  const payload = validate(req.body)" },
+                { t: "ctx", n: "  const signed = sign(payload, tenant.secret)" },
+                { t: "del", n: "  // retry up to 6x with exponential backoff" },
+                { t: "del", n: "  let delay = 250" },
+                { t: "del", n: "  for (let i = 0; i < 6; i++) {" },
+                { t: "del", n: "    const r = await httpPost(tenant.webhookUrl, signed)" },
+                { t: "del", n: "    if (r.ok) return res.status(200).end()" },
+                { t: "del", n: "    await sleep(delay)" },
+                { t: "del", n: "    delay *= 2" },
+                { t: "del", n: "  }" },
+                { t: "del", n: "  return res.status(502).end()" },
+                { t: "add", n: "  const id = await queue.enqueue(tenant.id, signed)" },
+                { t: "add", n: "  return res.status(202).json({ attemptId: id })" },
+                { t: "ctx", n: "}" }
+              ] }
+          ] }
+      ]
+    },
+
+    {
+      id: "worker-pool",
+      title: "Worker pool & backoff policy",
+      tag: "new module",
+      scope: "workers/runner/",
+      filesTouched: 3,
+      additions: 164,
+      deletions: 0,
+      depths: [
+        { kind: "summary",   label: "What it does",
+          body: "Long-running worker processes claim attempts and call out to the webhook URL, with exponential backoff up to 12 retries before dead-lettering." },
+        { kind: "diagram",   label: "Attempt state machine",
+          schema: "attempt-state-machine" },
+        { kind: "pseudocode", label: "What changed file by file",
+          files: [
+            { file: "workers/runner/runner.ts",       text: "Implements the per-worker claim loop: claim → POST → ack on 2xx, nack with reason otherwise." },
+            { file: "workers/runner/backoff.ts",      text: "Computes notBefore for retries using attempt count: 250ms doubled per attempt up to 12." },
+            { file: "workers/runner/runner.test.ts",  text: "Tests cover success, transient failure with retry, and dead-letter on the 12th failure." }
+          ] },
+        { kind: "diff",      label: "Diff · runner.ts",
+          file: "workers/runner/runner.ts",
+          hunks: [
+            { header: "@@ new file +1,14 @@",
+              lines: [
+                { t: "add", n: "export async function runWorker(id: string, q: WebhookDeliveryQueue) {" },
+                { t: "add", n: "  while (!shutdown) {" },
+                { t: "add", n: "    const a = await q.claim(id)" },
+                { t: "add", n: "    if (!a) { await sleep(200); continue }" },
+                { t: "add", n: "    try {" },
+                { t: "add", n: "      const r = await httpPost(a.url, a.payload, { timeout: 10_000 })" },
+                { t: "add", n: "      if (r.ok) await q.ack(a.id)" },
+                { t: "add", n: "      else      await q.nack(a.id, `status_${r.status}`)" },
+                { t: "add", n: "    } catch (e) {" },
+                { t: "add", n: "      await q.nack(a.id, e.message)" },
+                { t: "add", n: "    }" },
+                { t: "add", n: "  }" },
+                { t: "add", n: "}" }
+              ] }
+          ] }
+      ]
+    }
+  ]
+};
+
+  </script>
+  <!-- END PR_DATA -->
+
+  <!-- BEGIN DIAGRAMS -->
+  <script type="text/babel" data-presets="env,react" data-type="module" id="diagrams">
+/* global React */
+const { useMemo } = React;
+
+// Clean, schematic diagrams. No clipart. Just rectangles, lines, dots, type.
+// All diagrams render at 720x420 viewBox, scale to container.
+
+function DiagramFrame({ children, caption }) {
+  return (
+    <div className="dgm-wrap">
+      <svg viewBox="0 0 720 420" className="dgm-svg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="dotgrid" x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.7" fill="rgba(20,18,12,0.18)" />
+          </pattern>
+          <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 Z" fill="currentColor" />
+          </marker>
+          <marker id="arrThin" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 Z" fill="currentColor" />
+          </marker>
+        </defs>
+        <rect width="720" height="420" fill="url(#dotgrid)" />
+        {children}
+      </svg>
+      {caption && <div className="dgm-cap">{caption}</div>}
+    </div>
+  );
+}
+
+function Box({ x, y, w, h, label, sub, kind = "default" }) {
+  const fills = {
+    default: "var(--paper)",
+    accent:  "var(--accent-soft)",
+    danger:  "rgba(220, 90, 70, 0.10)",
+    muted:   "rgba(20,18,12,0.04)",
+    inverse: "var(--ink)"
+  };
+  const strokes = {
+    default: "var(--ink)",
+    accent:  "var(--accent-ink)",
+    danger:  "rgb(180, 70, 55)",
+    muted:   "var(--ink-soft)",
+    inverse: "var(--ink)"
+  };
+  const textFill = kind === "inverse" ? "var(--paper)" : "var(--ink)";
+  return (
+    <g>
+      <rect x={x} y={y} width={w} height={h} rx="6"
+            fill={fills[kind]} stroke={strokes[kind]} strokeWidth="1.4" />
+      <text x={x + 14} y={y + 22} className="dgm-label" fill={textFill}>{label}</text>
+      {sub && <text x={x + 14} y={y + 40} className="dgm-sub" fill={textFill} opacity="0.66">{sub}</text>}
+    </g>
+  );
+}
+
+function Arrow({ x1, y1, x2, y2, label, dashed }) {
+  return (
+    <g style={{ color: "var(--ink)" }}>
+      <line x1={x1} y1={y1} x2={x2} y2={y2}
+            stroke="currentColor" strokeWidth="1.3"
+            strokeDasharray={dashed ? "4 4" : "0"}
+            markerEnd="url(#arr)" />
+      {label && (
+        <text x={(x1 + x2) / 2} y={(y1 + y2) / 2 - 6} textAnchor="middle"
+              className="dgm-edge">{label}</text>
+      )}
+    </g>
+  );
+}
+
+// --- Diagram registry ---
+
+function TenantFifoQueue() {
+  return (
+    <DiagramFrame caption="WebhookDeliveryQueue · per-tenant FIFO, SKIP LOCKED for concurrent claim">
+      {/* producers */}
+      <Box x={30}  y={60}  w={150} h={48} label="api/dispatch.ts" sub="enqueue()" />
+      <Box x={30}  y={120} w={150} h={48} label="api/admin.ts"    sub="requeue()" />
+      <Box x={30}  y={180} w={150} h={48} label="cron/scheduled"  sub="enqueueScheduled()" />
+
+      {/* queue */}
+      <g>
+        <rect x="240" y="80" width="240" height="160" rx="8"
+              fill="var(--paper)" stroke="var(--ink)" strokeWidth="1.4" />
+        <text x="252" y="102" className="dgm-label">webhook_attempts</text>
+        <text x="252" y="118" className="dgm-sub" opacity="0.66">postgres · FIFO per tenant</text>
+        {/* row pills */}
+        {[0,1,2,3].map(i => (
+          <g key={i}>
+            <rect x={252} y={130 + i*22} width={216} height={16} rx="3"
+                  fill="var(--accent-soft)" stroke="var(--accent-ink)" strokeWidth="0.8" />
+            <text x={260} y={142 + i*22} className="dgm-mono">tenant_{['a','a','b','c'][i]} · attempt {i+1}</text>
+          </g>
+        ))}
+      </g>
+
+      {/* workers */}
+      <Box x={540} y={60}  w={150} h={48} label="worker · w-1" sub="claim → ack" kind="accent" />
+      <Box x={540} y={120} w={150} h={48} label="worker · w-2" sub="claim → nack" kind="accent" />
+      <Box x={540} y={180} w={150} h={48} label="worker · w-N" sub="…" kind="muted" />
+
+      {/* arrows */}
+      <Arrow x1={180} y1={84}  x2={240} y2={120} label="enqueue" />
+      <Arrow x1={180} y1={144} x2={240} y2={150} />
+      <Arrow x1={180} y1={204} x2={240} y2={180} />
+      <Arrow x1={480} y1={130} x2={540} y2={84}  label="SKIP LOCKED" />
+      <Arrow x1={480} y1={160} x2={540} y2={144} />
+      <Arrow x1={480} y1={190} x2={540} y2={204} />
+
+      {/* legend */}
+      <g transform="translate(30, 320)">
+        <rect width="660" height="74" rx="6" fill="rgba(20,18,12,0.03)" stroke="var(--ink-soft)" strokeWidth="1" strokeDasharray="3 3" />
+        <text x="14" y="22" className="dgm-sub">Guarantees</text>
+        <text x="14" y="42" className="dgm-mono">at-least-once · FIFO per tenant · ack/nack with notBefore · DLQ after 12 attempts</text>
+        <text x="14" y="60" className="dgm-mono" opacity="0.6">no global ordering — confirm this is acceptable</text>
+      </g>
+    </DiagramFrame>
+  );
+}
+
+function BeforeAfterDispatch() {
+  return (
+    <DiagramFrame caption="POST /webhooks/dispatch · inline retry → enqueue and return 202">
+      {/* before */}
+      <text x="40" y="40" className="dgm-section">BEFORE</text>
+      <Box x={30}  y={60}  w={120} h={42} label="client" sub="POST" />
+      <Box x={170} y={60}  w={130} h={42} label="dispatch.ts" sub="validates + signs" />
+      <Box x={320} y={60}  w={130} h={42} label="loop ×6" sub="exp backoff" kind="danger" />
+      <Box x={470} y={60}  w={120} h={42} label="webhook_url" sub="external" />
+      <Arrow x1={150} y1={81} x2={170} y2={81} />
+      <Arrow x1={300} y1={81} x2={320} y2={81} />
+      <Arrow x1={450} y1={81} x2={470} y2={81} />
+      <text x="320" y="125" className="dgm-mono" fill="rgb(180,70,55)">caller blocks ~1.8s p95 · retries lost on restart</text>
+
+      {/* divider */}
+      <line x1="30" y1="180" x2="690" y2="180" stroke="var(--ink-soft)" strokeDasharray="3 3" />
+
+      {/* after */}
+      <text x="40" y="220" className="dgm-section">AFTER</text>
+      <Box x={30}  y={240} w={120} h={42} label="client" sub="POST" />
+      <Box x={170} y={240} w={130} h={42} label="dispatch.ts" sub="validate + enqueue" kind="accent" />
+      <Box x={320} y={240} w={130} h={42} label="queue" sub="webhook_attempts" />
+      <Box x={470} y={240} w={150} h={42} label="worker pool" sub="N=8 · async" kind="accent" />
+      <Box x={470} y={300} w={150} h={42} label="webhook_url" sub="external" />
+
+      <Arrow x1={150} y1={261} x2={170} y2={261} />
+      <Arrow x1={300} y1={261} x2={320} y2={261} label="enqueue" />
+      <Arrow x1={170} y1={282} x2={150} y2={282} label="202 · 22ms" />
+      <Arrow x1={450} y1={261} x2={470} y2={261} label="claim" />
+      <Arrow x1={545} y1={282} x2={545} y2={300} />
+      <text x="320" y="380" className="dgm-mono" fill="var(--accent-ink)">caller returns in ~22ms · retries durable across restarts</text>
+    </DiagramFrame>
+  );
+}
+
+function AttemptStateMachine() {
+  const node = (x, y, label, kind="default") => <Box x={x} y={y} w={120} h={40} label={label} kind={kind} />;
+  return (
+    <DiagramFrame caption="Attempt state machine · 12 retries then dead_letter">
+      {node(40,  100, "pending")}
+      {node(220, 100, "in_flight", "accent")}
+      {node(400, 60,  "delivered", "accent")}
+      {node(400, 140, "scheduled")}
+      {node(580, 140, "dead_letter", "danger")}
+
+      <Arrow x1={160} y1={120} x2={220} y2={120} label="claim()" />
+      <Arrow x1={340} y1={110} x2={400} y2={80}  label="ack" />
+      <Arrow x1={340} y1={130} x2={400} y2={155} label="nack · attempt < 12" />
+      <Arrow x1={520} y1={160} x2={580} y2={160} label="attempt = 12" />
+
+      {/* loop back */}
+      <path d="M 460 180 C 460 240, 240 240, 240 160"
+            stroke="var(--ink)" strokeWidth="1.3" fill="none"
+            strokeDasharray="4 4" markerEnd="url(#arr)" />
+      <text x="350" y="240" textAnchor="middle" className="dgm-edge">notBefore = now + 2^attempt · 250ms</text>
+
+      <g transform="translate(40, 290)">
+        <rect width="640" height="100" rx="6" fill="rgba(20,18,12,0.03)" stroke="var(--ink-soft)" strokeDasharray="3 3" />
+        <text x="14" y="24" className="dgm-section">INVARIANTS</text>
+        <text x="14" y="46" className="dgm-mono">· state ∈ {`{`}pending, in_flight, scheduled, delivered, dead_letter{`}`}</text>
+        <text x="14" y="64" className="dgm-mono">· in_flight rows always have claimed_by, claimed_at set</text>
+        <text x="14" y="82" className="dgm-mono">· terminal states (delivered, dead_letter) are never re-claimed</text>
+      </g>
+    </DiagramFrame>
+  );
+}
+
+function WebhookAttemptsSchema() {
+  const cols = [
+    ["id",                  "uuid",        "PK"],
+    ["tenant_id",           "uuid",        "FK tenants"],
+    ["payload",             "jsonb",       ""],
+    ["state",               "text",        "default 'pending'"],
+    ["attempt",             "int",         "default 0"],
+    ["not_before",          "timestamptz", "default now()"],
+    ["claimed_by",          "text",        "nullable"],
+    ["claimed_at",          "timestamptz", "nullable"],
+    ["enqueued_at",         "timestamptz", "default now()"],
+    ["finished_at",         "timestamptz", "nullable"],
+    ["dead_letter_reason",  "text",        "nullable"]
+  ];
+  return (
+    <DiagramFrame caption="db/migrations/0142 · webhook_attempts">
+      <g>
+        <rect x="40" y="40" width="640" height={48 + cols.length * 24} rx="8"
+              fill="var(--paper)" stroke="var(--ink)" strokeWidth="1.4" />
+        <text x="56" y="66" className="dgm-label">webhook_attempts</text>
+        <line x1="40" y1="80" x2="680" y2="80" stroke="var(--ink-soft)" />
+        {cols.map((c, i) => (
+          <g key={i} transform={`translate(0, ${96 + i*24})`}>
+            <text x="56"  className="dgm-mono">{c[0]}</text>
+            <text x="260" className="dgm-mono" opacity="0.66">{c[1]}</text>
+            <text x="440" className="dgm-mono" opacity="0.5">{c[2]}</text>
+          </g>
+        ))}
+      </g>
+      <g transform={`translate(40, ${56 + cols.length*24 + 40})`}>
+        <text className="dgm-section">INDEX</text>
+        <text y="24" className="dgm-mono">webhook_attempts_claim_idx (state, not_before) WHERE state = 'pending'</text>
+      </g>
+    </DiagramFrame>
+  );
+}
+
+function AdminEndpoints() {
+  const eps = [
+    { m: "GET",    p: "/admin/attempts",                    note: "paginated · ?tenant&state&cursor", kind: "default" },
+    { m: "POST",   p: "/admin/attempts/:id/requeue",        note: "requires ops role · audited",       kind: "accent"  },
+    { m: "GET",    p: "/admin/attempts/dead-letter",        note: "DLQ inspection",                    kind: "default" },
+    { m: "DELETE", p: "/webhooks/replay",                   note: "removed · was legacy",              kind: "danger"  }
+  ];
+  return (
+    <DiagramFrame caption="api/admin · endpoint surface">
+      {eps.map((e, i) => (
+        <g key={i} transform={`translate(40, ${50 + i*70})`}>
+          <rect width="640" height="56" rx="6"
+                fill={e.kind === "accent" ? "var(--accent-soft)"
+                     : e.kind === "danger" ? "rgba(220, 90, 70, 0.08)"
+                     : "var(--paper)"}
+                stroke={e.kind === "accent" ? "var(--accent-ink)"
+                       : e.kind === "danger" ? "rgb(180, 70, 55)"
+                       : "var(--ink)"}
+                strokeWidth="1.3" />
+          <text x="20" y="24" className="dgm-mono"
+                fill={e.kind === "danger" ? "rgb(180, 70, 55)" : "var(--ink)"}
+                fontWeight="600">{e.m}</text>
+          <text x="80" y="24" className="dgm-mono">{e.p}</text>
+          <text x="20" y="44" className="dgm-sub" opacity="0.66">{e.note}</text>
+        </g>
+      ))}
+    </DiagramFrame>
+  );
+}
+
+function Diagram({ schema }) {
+  switch (schema) {
+    case "tenant-fifo-queue":      return <TenantFifoQueue />;
+    case "before-after-dispatch":  return <BeforeAfterDispatch />;
+    case "attempt-state-machine":  return <AttemptStateMachine />;
+    case "webhook-attempts-schema": return <WebhookAttemptsSchema />;
+    case "admin-endpoints":         return <AdminEndpoints />;
+    default: return <DiagramFrame caption="diagram"><text x="360" y="210" textAnchor="middle" className="dgm-sub">diagram</text></DiagramFrame>;
+  }
+}
+
+window.Diagram = Diagram;
+
+  </script>
+  <!-- END DIAGRAMS -->
+
+  <!-- App component — the renderer. Do not edit. -->
+  <script type="text/babel" data-presets="env,react" data-type="module" id="app">
+/* global React, ReactDOM, Diagram, PR_DATA */
+const { useState, useEffect, useMemo, useRef, useCallback } = React;
+
+const PR = window.PR_DATA;
+
+// ---------- helpers ----------
+function cls(...xs) { return xs.filter(Boolean).join(" "); }
+
+function useKeyNav(onKey) {
+  useEffect(() => {
+    const h = (e) => {
+      if (e.target.matches("input, textarea")) return;
+      onKey(e);
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onKey]);
+}
+
+// ---------- top chrome ----------
+function TopBar({ x, y, totalX, depthsForCol, decisions, onJumpHome }) {
+  const change = x === 0 ? null : PR.changes[x - 1];
+  return (
+    <header className="topbar">
+      <div className="topbar-l">
+        <button className="brand" onClick={onJumpHome}>
+          <span className="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path d="M4 12 L10 18 L20 6" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="square" strokeLinejoin="miter" />
+            </svg>
+          </span>
+          <span className="brand-name">BetterReview</span>
+          <span className="brand-sub">/ {PR.meta.repo}</span>
+        </button>
+      </div>
+
+      <div className="topbar-c">
+        <div className="crumbs">
+          <span className="crumb">PR · {PR.meta.title}</span>
+          <span className="crumb-sep">›</span>
+          {x === 0 ? (
+            <span className="crumb crumb-active">Overview</span>
+          ) : (
+            <>
+              <span className="crumb">Change {x} of {totalX - 1}</span>
+              <span className="crumb-sep">›</span>
+              <span className="crumb crumb-active">{change.title}</span>
+              <span className="crumb-sep">·</span>
+              <span className="crumb crumb-mono">{depthsForCol[y]?.label}</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="topbar-r">
+        <div className="counters">
+          <span className="counter"><i className="dot dot-approve" />{decisions.approved} approved</span>
+          <span className="counter"><i className="dot dot-changes" />{decisions.changes} changes</span>
+          <span className="counter"><i className="dot dot-skip" />{decisions.skipped} skipped</span>
+        </div>
+        <div className="agent-pill" title={`Codex run ${PR.meta.runId}`}>
+          <span className="agent-dot" /> codex-agent · {PR.meta.runId.slice(0,12)}…
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// ---------- minimap (the lattice) ----------
+function MiniMap({ x, y, columns, decisions, onGoto }) {
+  return (
+    <div className="minimap" aria-label="canvas overview">
+      <div className="mm-axis mm-axis-x">CHANGES →</div>
+      <div className="mm-axis mm-axis-y">DEPTH ↓</div>
+      <div className="mm-grid" style={{ gridTemplateColumns: `repeat(${columns.length}, 1fr)` }}>
+        {columns.map((col, ci) => (
+          <div key={ci} className="mm-col">
+            {col.map((cell, ri) => {
+              const active = ci === x && ri === y;
+              const dec = decisions.byChange[ci - 1]; // overview has no decision
+              const decClass = ci > 0 && dec ? `mm-${dec}` : "";
+              return (
+                <button
+                  key={ri}
+                  className={cls("mm-cell", active && "mm-active", decClass)}
+                  onClick={() => onGoto(ci, ri)}
+                  aria-label={`column ${ci} row ${ri}`}
+                  title={cell}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------- card content renderers ----------
+function OverviewCard() {
+  const m = PR.meta;
+  const s = PR.summary;
+  return (
+    <div className="card card-overview">
+      <div className="card-edge">OVERVIEW · 00</div>
+      <div className="ov-grid">
+        <header className="ov-head">
+          <div className="ov-tag">CODEX PR · {m.commits} COMMITS · {m.filesChanged} FILES · <span className="add">+{m.additions}</span> <span className="del">−{m.deletions}</span></div>
+          <h1 className="ov-title">{m.title}</h1>
+          <p className="ov-intent">{s.headline}</p>
+        </header>
+
+        <section className="ov-bullets">
+          <div className="kicker">WHAT'S IN THIS PR</div>
+          <ol>
+            {s.bullets.map((b, i) => <li key={i}>{b}</li>)}
+          </ol>
+        </section>
+
+        <section className="ov-risks">
+          <div className="kicker">RISK SIGNALS</div>
+          <ul>
+            {s.risks.map((r, i) => (
+              <li key={i} className={`risk risk-${r.level}`}>
+                <span className="risk-badge">{r.level.toUpperCase()}</span>
+                <span>{r.text}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="ov-howto">
+          <div className="howto-grid">
+            <div><kbd>→</kbd> next change</div>
+            <div><kbd>↓</kbd> deeper</div>
+            <div><kbd>A</kbd> approve</div>
+            <div><kbd>R</kbd> request changes</div>
+            <div><kbd>S</kbd> skip</div>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function ChangeCard({ change, depth, depthIdx, totalDepths, decision, changeNum, totalChanges }) {
+  return (
+    <div className="card card-change">
+      <aside className="ch-rail">
+        <div className="rail-top">
+          <div className="rail-num">
+            <span className="rn-cur">{String(changeNum).padStart(2,'0')}</span>
+            <span className="rn-sep">/</span>
+            <span className="rn-tot">{String(totalChanges).padStart(2,'0')}</span>
+          </div>
+          <div className="rail-tag">{change.tag}</div>
+          <h2 className="rail-title">{change.title}</h2>
+          <div className="rail-scope">
+            <code>{change.scope}</code>
+          </div>
+          <div className="rail-stats">
+            <span>{change.filesTouched} <em>files</em></span>
+            <span><span className="add">+{change.additions}</span></span>
+            <span><span className="del">−{change.deletions}</span></span>
+          </div>
+        </div>
+
+        <div className="rail-mid">
+          <div className="rail-kicker">GRANULARITY</div>
+          <div className="rail-ladder">
+            {change.depths.map((d, i) => (
+              <div key={i} className={cls("rl-step", i === depthIdx && "rl-active", i < depthIdx && "rl-passed")}>
+                <span className="rl-num">{i + 1}</span>
+                <span className="rl-name">{d.kind}</span>
+                <span className="rl-bar" />
+              </div>
+            ))}
+          </div>
+          <div className="rail-hint">
+            <kbd>↓</kbd><span>deeper</span>
+            <kbd>↑</kbd><span>shallower</span>
+          </div>
+        </div>
+
+        <div className="rail-bot">
+          {decision ? (
+            <div className={`rail-decision rail-decision-${decision}`}>
+              {decision === "approved" && "approved"}
+              {decision === "changes"  && "changes requested"}
+              {decision === "skipped"  && "skipped"}
+            </div>
+          ) : (
+            <div className="rail-decision rail-decision-pending">awaiting review</div>
+          )}
+        </div>
+      </aside>
+
+      <div className="ch-stage">
+        <div className="ch-stagehead">
+          <div className="depth-label">{depth.label}</div>
+          <div className="ch-depth-pill">DEPTH {depthIdx + 1}/{totalDepths} · {depth.kind}</div>
+        </div>
+        <div className="ch-body">
+          <DepthBody depth={depth} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DepthBody({ depth }) {
+  if (depth.kind === "summary") {
+    return (
+      <div className="depth depth-summary">
+        <p className="depth-prose">{depth.body}</p>
+      </div>
+    );
+  }
+  if (depth.kind === "diagram") {
+    return (
+      <div className="depth depth-diagram">
+        <Diagram schema={depth.schema} />
+      </div>
+    );
+  }
+  if (depth.kind === "pseudocode") {
+    const items = Array.isArray(depth.files)
+      ? depth.files
+      : (depth.body ? [{ file: "", text: depth.body, mono: true }] : []);
+    return (
+      <div className="depth depth-pseudo">
+        {items.map((it, i) => (
+          <div key={i} className="pseudo-row">
+            {it.file && <div className="pseudo-row-file"><code>{it.file}</code></div>}
+            {it.mono
+              ? <pre className="pseudo">{it.text}</pre>
+              : <div className="pseudo-row-text">{it.text}</div>}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (depth.kind === "diff") {
+    return (
+      <div className="depth depth-diff">
+        <div className="depth-file"><code>{depth.file}</code></div>
+        <div className="diff">
+          {depth.hunks.map((h, i) => (
+            <div key={i} className="hunk">
+              <div className="hunk-head">{h.header}</div>
+              {h.lines.map((ln, j) => (
+                <div key={j} className={`dl dl-${ln.t}`}>
+                  <span className="dl-gutter">
+                    {ln.t === "add" ? "+" : ln.t === "del" ? "−" : " "}
+                  </span>
+                  <span className="dl-text">{ln.n || "\u00A0"}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
+
+function DepthLadder({ current, depths }) {
+  return (
+    <div className="ladder">
+      <span className="ladder-cap">GRANULARITY</span>
+      {depths.map((d, i) => (
+        <span key={i} className={cls("ladder-step", i === current && "ladder-active", i < current && "ladder-passed")}>
+          <span className="ladder-num">{i + 1}</span>
+          <span className="ladder-name">{d.kind}</span>
+        </span>
+      ))}
+      <span className="ladder-hint">↓ deeper</span>
+    </div>
+  );
+}
+
+// ---------- side action rail ----------
+function ActionRail({ x, decision, onApprove, onChanges, onSkip, onDeeper, onShallower, canDeep, canShallow }) {
+  if (x === 0) return null;
+  return (
+    <div className="rail">
+      <button className="rail-depth" onClick={onShallower} disabled={!canShallow} title="Less detail (↑)">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 14l6-6 6 6" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="square" /></svg>
+        <span>shallower</span>
+      </button>
+
+      <div className="rail-decisions">
+        <button className={cls("rail-btn rail-approve", decision === "approved" && "is-active")} onClick={onApprove}>
+          <span className="rail-key">A</span>
+          <span className="rail-label">Approve</span>
+        </button>
+        <button className={cls("rail-btn rail-changes", decision === "changes" && "is-active")} onClick={onChanges}>
+          <span className="rail-key">R</span>
+          <span className="rail-label">Request changes</span>
+        </button>
+        <button className={cls("rail-btn rail-skip", decision === "skipped" && "is-active")} onClick={onSkip}>
+          <span className="rail-key">S</span>
+          <span className="rail-label">Skip</span>
+        </button>
+      </div>
+
+      <button className="rail-depth" onClick={onDeeper} disabled={!canDeep} title="More detail (↓)">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 10l6 6 6-6" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="square" /></svg>
+        <span>deeper</span>
+      </button>
+    </div>
+  );
+}
+
+// ---------- the canvas (panning grid of cards) ----------
+function Canvas({ x, y, columns, decisions, onSwipe }) {
+  // each column has its own y offset (tracks the depth user is at on that column)
+  // x and y refer to current cell. We render every cell in the lattice with absolute transforms.
+  const colWidthPct = 100;
+
+  return (
+    <div className="canvas-clip">
+      <div
+        className="canvas"
+        style={{
+          transform: `translate3d(${-x * colWidthPct}vw, 0, 0)`
+        }}
+      >
+        {columns.map((col, ci) => (
+          <div
+            key={ci}
+            className={cls("col", ci === x && "col-active")}
+            style={{ left: `${ci * colWidthPct}vw` }}
+          >
+            <div
+              className="col-stack"
+              style={{ transform: `translate3d(0, ${ci === x ? -y * 100 : 0}%, 0)` }}
+            >
+              {col.map((cellNode, ri) => (
+                <div
+                  key={ri}
+                  className={cls("cell", ci === x && ri === y && "cell-focus")}
+                  style={{ top: `${ri * 100}%` }}
+                  data-screen-label={ci === 0 ? "00 Overview" : `${String(ci).padStart(2,'0')} ${PR.changes[ci-1].title} · depth ${ri+1}`}
+                >
+                  {cellNode}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------- finish modal ----------
+function FinishOverlay({ open, decisions, onClose, onPost }) {
+  if (!open) return null;
+  const total = PR.changes.length;
+  const done = decisions.approved + decisions.changes + decisions.skipped;
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="finish" onClick={e => e.stopPropagation()}>
+        <div className="finish-head">
+          <div className="kicker">REVIEW READY TO POST</div>
+          <h2>{decisions.approved}/{total} approved · {decisions.changes} changes requested</h2>
+        </div>
+        <ul className="finish-list">
+          {PR.changes.map((c, i) => {
+            const d = decisions.byChange[i] || "pending";
+            return (
+              <li key={c.id} className={`finish-row finish-${d}`}>
+                <span className="finish-dot" />
+                <span className="finish-title">{c.title}</span>
+                <span className="finish-state">{d}</span>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="finish-actions">
+          <button className="btn btn-ghost" onClick={onClose}>Keep reviewing</button>
+          <button className="btn btn-primary" onClick={onPost} disabled={done < total}>
+            Post review {done < total && <span className="btn-sub">· {total - done} left</span>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- the App ----------
+function App() {
+  // (x,y): x=0 is overview, x=1..N is each change. y=depth within that change.
+  const [x, setX] = useState(0);
+  const [y, setY] = useState(0);
+  const [showFinish, setShowFinish] = useState(false);
+  const [posted, setPosted] = useState(false);
+
+  // decisions per change index (0..N-1 for changes array)
+  const [byChange, setByChange] = useState({}); // { changeIdx: "approved" | "changes" | "skipped" }
+
+  // build columns (each column is array of cells)
+  const columns = useMemo(() => {
+    const cols = [];
+    cols.push([<OverviewCard key="ov" />]);
+    PR.changes.forEach((change, ci) => {
+      const cells = change.depths.map((d, di) => (
+        <ChangeCard
+          key={di}
+          change={change}
+          depth={d}
+          depthIdx={di}
+          totalDepths={change.depths.length}
+          decision={byChange[ci]}
+          changeNum={ci + 1}
+          totalChanges={PR.changes.length}
+        />
+      ));
+      cols.push(cells);
+    });
+    return cols;
+  }, [byChange]);
+
+  // labels for minimap
+  const colLabels = useMemo(() => {
+    const cols = [["Overview"]];
+    PR.changes.forEach(c => cols.push(c.depths.map(d => `${c.title} · ${d.kind}`)));
+    return cols;
+  }, []);
+
+  const decisions = useMemo(() => {
+    let approved = 0, changes = 0, skipped = 0;
+    Object.values(byChange).forEach(v => {
+      if (v === "approved") approved++;
+      else if (v === "changes") changes++;
+      else if (v === "skipped") skipped++;
+    });
+    return { approved, changes, skipped, byChange };
+  }, [byChange]);
+
+  const totalCols = columns.length;
+  const curColLen = columns[x].length;
+
+  const setDecision = useCallback((dec) => {
+    if (x === 0) return;
+    const ci = x - 1;
+    setByChange(prev => ({ ...prev, [ci]: dec }));
+    // auto-advance to next change after a beat
+    setTimeout(() => {
+      setX(cur => {
+        if (cur < totalCols - 1) { setY(0); return cur + 1; }
+        return cur;
+      });
+    }, 280);
+  }, [x, totalCols]);
+
+  const goto = (nx, ny) => {
+    setX(Math.max(0, Math.min(totalCols - 1, nx)));
+    setY(Math.max(0, ny));
+  };
+
+  useKeyNav(useCallback((e) => {
+    if (e.key === "ArrowRight") {
+      if (x < totalCols - 1) { setX(x + 1); setY(0); e.preventDefault(); }
+      else { setShowFinish(true); }
+    } else if (e.key === "ArrowLeft") {
+      if (x > 0) { setX(x - 1); setY(0); e.preventDefault(); }
+    } else if (e.key === "ArrowDown") {
+      if (y < curColLen - 1) { setY(y + 1); e.preventDefault(); }
+    } else if (e.key === "ArrowUp") {
+      if (y > 0) { setY(y - 1); e.preventDefault(); }
+    } else if (e.key === "a" || e.key === "A") {
+      setDecision("approved");
+    } else if (e.key === "r" || e.key === "R") {
+      setDecision("changes");
+    } else if (e.key === "s" || e.key === "S") {
+      setDecision("skipped");
+    } else if (e.key === "Escape") {
+      setShowFinish(false);
+    }
+  }, [x, y, curColLen, totalCols, setDecision]));
+
+  // wheel/touch swipes (lightweight)
+  const wheelLock = useRef(0);
+  const onWheel = (e) => {
+    const now = Date.now();
+    if (now - wheelLock.current < 320) return;
+    const ax = Math.abs(e.deltaX), ay = Math.abs(e.deltaY);
+    if (ax > ay && ax > 24) {
+      wheelLock.current = now;
+      if (e.deltaX > 0 && x < totalCols - 1) { setX(x + 1); setY(0); }
+      else if (e.deltaX < 0 && x > 0) { setX(x - 1); setY(0); }
+    } else if (ay > 24) {
+      wheelLock.current = now;
+      if (e.deltaY > 0 && y < curColLen - 1) setY(y + 1);
+      else if (e.deltaY < 0 && y > 0) setY(y - 1);
+    }
+  };
+
+  const allDecided = Object.keys(byChange).length === PR.changes.length
+    && Object.values(byChange).every(v => v);
+
+  return (
+    <div className="app" onWheel={onWheel}>
+      <TopBar
+        x={x} y={y}
+        totalX={totalCols}
+        depthsForCol={x === 0 ? [{ label: "intro" }] : PR.changes[x-1].depths}
+        decisions={decisions}
+        onJumpHome={() => { setX(0); setY(0); }}
+      />
+
+      <main className="stage">
+        <Canvas x={x} y={y} columns={columns} decisions={decisions} />
+
+        <ActionRail
+          x={x}
+          decision={x > 0 ? byChange[x - 1] : null}
+          onApprove={() => setDecision("approved")}
+          onChanges={() => setDecision("changes")}
+          onSkip={() => setDecision("skipped")}
+          onDeeper={() => y < curColLen - 1 && setY(y + 1)}
+          onShallower={() => y > 0 && setY(y - 1)}
+          canDeep={y < curColLen - 1}
+          canShallow={y > 0}
+        />
+      </main>
+
+      <footer className="footbar">
+        <MiniMap x={x} y={y} columns={colLabels} decisions={decisions} onGoto={goto} />
+        <div className="footbar-r">
+          <div className="progress-line">
+            <div className="progress-fill" style={{ width: `${(Object.keys(byChange).length / PR.changes.length) * 100}%` }} />
+          </div>
+          <div className="progress-text">
+            {Object.keys(byChange).length} / {PR.changes.length} changes reviewed
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={() => setShowFinish(true)}>
+            {allDecided ? "Post review" : "Finish & post"}
+          </button>
+        </div>
+      </footer>
+
+      <FinishOverlay
+        open={showFinish}
+        decisions={decisions}
+        onClose={() => setShowFinish(false)}
+        onPost={() => { setPosted(true); setShowFinish(false); }}
+      />
+
+      {posted && (
+        <div className="toast">
+          <span className="toast-dot" />
+          Review posted to {PR.meta.repo} · {decisions.approved} approved, {decisions.changes} changes requested
+          <button onClick={() => setPosted(false)}>×</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+  </script>
+</body>
+</html>
