@@ -103,6 +103,9 @@ Semantic review content belongs in the Markdown body.
 
 ## Quick Start
 
+Install the plugin into Codex from this repository using the Codex plugin
+installer, then enable BetterReview in your Codex plugins list.
+
 Install dependencies:
 
 ```bash
