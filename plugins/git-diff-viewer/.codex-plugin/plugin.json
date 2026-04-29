@@ -1,0 +1,38 @@
+{
+  "name": "git-diff-viewer",
+  "version": "0.1.0",
+  "description": "Codex plugin scaffold for reviewing Git diffs with a future local viewer.",
+  "author": {
+    "name": "IntuneAI Hackathon Team"
+  },
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "git",
+    "diff",
+    "review"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "apps": "./.app.json",
+  "interface": {
+    "displayName": "Git Diff Viewer",
+    "shortDescription": "Review Git diffs with Codex and a local viewer.",
+    "longDescription": "Scaffold for a Codex plugin that will expose Git diff review tools through MCP and render review sessions in a local web viewer.",
+    "developerName": "IntuneAI Hackathon Team",
+    "category": "Productivity",
+    "capabilities": [
+      "MCP",
+      "Local viewer",
+      "Git review"
+    ],
+    "defaultPrompt": [
+      "Review my working tree with Git Diff Viewer.",
+      "Create a Git Diff Viewer review session for this branch."
+    ],
+    "brandColor": "#2563EB",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/logo.png",
+    "screenshots": []
+  }
+}

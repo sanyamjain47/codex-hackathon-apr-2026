@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "git-diff-viewer": {
+      "command": "npm",
+      "args": [
+        "run",
+        "dev",
+        "--workspace",
+        "@git-diff-viewer/server"
+      ],
+      "enabled": true
+    }
+  }
+}

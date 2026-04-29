@@ -1,0 +1,9 @@
+{
+  "apps": {
+    "viewer": {
+      "name": "Git Diff Viewer",
+      "description": "Future local web UI for visualizing review sessions.",
+      "path": "./viewer"
+    }
+  }
+}

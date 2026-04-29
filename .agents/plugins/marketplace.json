@@ -1,0 +1,20 @@
+{
+  "name": "codex-hackathon-apr-2026",
+  "interface": {
+    "displayName": "Codex Hackathon Plugins"
+  },
+  "plugins": [
+    {
+      "name": "git-diff-viewer",
+      "source": {
+        "source": "local",
+        "path": "./plugins/git-diff-viewer"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
