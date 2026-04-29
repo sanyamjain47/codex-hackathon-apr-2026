@@ -1,6 +1,6 @@
 {
   "name": "git-diff-viewer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Codex plugin proof of concept for launching a local Git Diff Viewer UI.",
   "author": {
     "name": "IntuneAI Hackathon Team"

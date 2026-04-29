@@ -1,6 +1,6 @@
 {
   "name": "@git-diff-viewer/app",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "Next.js UI proof of concept for the Git Diff Viewer Codex plugin.",
