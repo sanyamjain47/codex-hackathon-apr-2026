@@ -1,6 +1,6 @@
 {
   "name": "better-review",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Codex plugin for generating human-friendly BetterReview cards from branch diffs.",
   "author": {
     "name": "IntuneAI Hackathon Team"

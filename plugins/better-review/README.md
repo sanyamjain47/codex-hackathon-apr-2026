@@ -8,6 +8,8 @@ When BetterReview is invoked from a Codex thread, Codex should start the local s
 
 - `.codex-plugin/plugin.json`: plugin metadata shown to Codex.
 - `viewer`: static UI.
+- `docs`: packaged review-generation prompt context.
+- `examples/review`: packaged fixture cards for local validation and seeding.
 - `.app.json`: app integration placeholder.
 - `skills`: Codex skill instructions.
 - `assets`: future icons, logos, and screenshots.

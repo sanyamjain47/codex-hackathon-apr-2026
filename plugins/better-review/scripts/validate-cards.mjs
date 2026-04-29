@@ -1,16 +1,20 @@
 #!/usr/bin/env node
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const VALID_LEVELS = new Set([1, 2, 3]);
 const VALID_RISKS = new Set(["low", "medium", "high"]);
 const VALID_CONFIDENCE = new Set(["low", "medium", "high"]);
 const VALID_STATUS = new Set(["unreviewed", "approved", "flagged", "needs-change"]);
+const PLUGIN_ROOT = fileURLToPath(new URL("../", import.meta.url));
 
 function parseArgs(argv) {
   const cwd = process.env.INIT_CWD ?? process.cwd();
   const args = {
-    cardsDir: path.resolve(cwd, argv[2] ?? "examples/review")
+    cardsDir: argv[2]
+      ? path.resolve(cwd, argv[2])
+      : path.join(PLUGIN_ROOT, "examples", "review")
   };
 
   for (let index = 2; index < argv.length; index += 1) {

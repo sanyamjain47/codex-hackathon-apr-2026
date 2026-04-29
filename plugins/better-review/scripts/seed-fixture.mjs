@@ -21,7 +21,7 @@ async function pathExists(filePath) {
 }
 
 async function main() {
-  const fixtureDir = path.join(REPO_ROOT, "examples", "review");
+  const fixtureDir = path.join(PLUGIN_ROOT, "examples", "review");
   const betterReviewRoot = path.join(REPO_ROOT, ".better-review");
   const currentDir = path.join(betterReviewRoot, "current");
   const sessionsDir = path.join(betterReviewRoot, "sessions");

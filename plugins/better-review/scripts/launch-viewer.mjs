@@ -14,7 +14,7 @@ const MAX_PORT_ATTEMPTS = Number.parseInt(
 const PLUGIN_ROOT = fileURLToPath(new URL("../", import.meta.url));
 const REPO_ROOT = path.resolve(PLUGIN_ROOT, "../..");
 const TARGET_ROOT = path.resolve(process.env.BETTER_REVIEW_TARGET ?? REPO_ROOT);
-const VIEWER_INDEX = path.join(REPO_ROOT, "examples", "BetterReview-Sample-UI.html");
+const VIEWER_INDEX = path.join(PLUGIN_ROOT, "viewer", "index.html");
 const REVIEW_ROOT = path.join(TARGET_ROOT, ".better-review", "current");
 const CARDS_DIR = path.join(REVIEW_ROOT, "cards");
 

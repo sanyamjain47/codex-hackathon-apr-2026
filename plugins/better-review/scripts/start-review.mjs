@@ -18,7 +18,6 @@ const MODEL = process.env.BETTER_REVIEW_MODEL ?? "gpt-5.4";
 const SERVICE_TIER = "fast";
 const EFFORT = "low";
 const PLUGIN_ROOT = fileURLToPath(new URL("../", import.meta.url));
-const REPO_ROOT = path.resolve(PLUGIN_ROOT, "../..");
 const SESSION_DIR_NAME = ".better-review";
 const OUTPUT_LIMIT = 8 * 1024 * 1024;
 
@@ -195,8 +194,8 @@ async function collectReviewContext(gitRoot, mergeBase) {
 }
 
 async function buildPrompt({ gitRoot, session, base, context }) {
-  const contract = await readFile(path.join(REPO_ROOT, "docs", "contract.md"), "utf8");
-  const prd = await readFile(path.join(REPO_ROOT, "docs", "prd.md"), "utf8");
+  const contract = await readFile(path.join(PLUGIN_ROOT, "docs", "contract.md"), "utf8");
+  const prd = await readFile(path.join(PLUGIN_ROOT, "docs", "prd.md"), "utf8");
 
   return `You are the BetterReview review-card generator.
 

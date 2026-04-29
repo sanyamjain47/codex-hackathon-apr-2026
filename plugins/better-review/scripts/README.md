@@ -32,12 +32,12 @@ npm run start-review -- --dry-run
 Validates card frontmatter and tree links:
 
 ```bash
-npm run validate:cards -- --cards-dir examples/review
+npm run validate:cards
 ```
 
 ## `seed-fixture.mjs`
 
-Copies `examples/review` into `.better-review/current/cards` so the static UI
+Copies the packaged `examples/review` fixture into `.better-review/current/cards` so the static UI
 can be tested without spending model calls:
 
 ```bash
