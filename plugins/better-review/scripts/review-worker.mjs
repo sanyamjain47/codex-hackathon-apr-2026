@@ -8,7 +8,7 @@ import { execFile } from "node:child_process";
 
 const execFileAsync = promisify(execFile);
 const PLUGIN_ROOT = fileURLToPath(new URL("../", import.meta.url));
-const MODEL = process.env.BETTER_REVIEW_MODEL ?? "gpt-5.5";
+const MODEL = process.env.BETTER_REVIEW_MODEL ?? "gpt-5.4";
 const SERVICE_TIER = "fast";
 const EFFORT = "low";
 
@@ -207,14 +207,11 @@ async function main() {
       serviceTier: SERVICE_TIER,
       cwd: args.target,
       approvalPolicy: "never",
-      approvalsReviewer: "user",
       sandbox: "workspace-write",
       serviceName: "BetterReview",
       developerInstructions:
         "You are running as the BetterReview card generator. You must write only review card Markdown files inside the requested .better-review/current/cards directory and must never edit source code.",
-      ephemeral: true,
-      experimentalRawEvents: false,
-      persistExtendedHistory: true
+      ephemeral: true
     });
 
     const threadId = threadResponse.thread.id;
