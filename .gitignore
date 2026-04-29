@@ -10,3 +10,4 @@ pnpm-debug.log*
 yarn-debug.log*
 .docs
 Codex.local.md
+**/review/feedback.jsonl
