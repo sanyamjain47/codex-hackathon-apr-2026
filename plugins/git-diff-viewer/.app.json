@@ -2,8 +2,13 @@
   "apps": {
     "viewer": {
       "name": "Git Diff Viewer",
-      "description": "Future local web UI for visualizing review sessions.",
-      "path": "./viewer"
+      "description": "Local Next.js UI for the Git Diff Viewer proof of concept.",
+      "path": "./viewer",
+      "launch": {
+        "command": "npm run launch --workspace git-diff-viewer",
+        "preferredUrl": "http://127.0.0.1:3000",
+        "urlOutputPrefix": "GIT_DIFF_VIEWER_URL="
+      }
     }
   }
 }

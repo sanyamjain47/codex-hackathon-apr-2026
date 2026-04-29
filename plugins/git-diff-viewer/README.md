@@ -2,13 +2,13 @@
 
 This directory is the Codex plugin package.
 
+The current proof of concept is narrow: when Git Diff Viewer is invoked from a Codex thread, Codex should start the local Next.js app and open it in the Codex browser.
+
 ## Contents
 
 - `.codex-plugin/plugin.json`: plugin metadata shown to Codex.
-- `.mcp.json`: MCP server configuration.
+- `viewer`: Next.js UI app.
 - `.app.json`: app integration placeholder.
-- `server`: STDIO MCP server package.
-- `viewer`: local web viewer package.
 - `skills`: Codex skill instructions.
 - `assets`: future icons, logos, and screenshots.
 - `scripts`: helper scripts for packaging and local development.
@@ -19,12 +19,17 @@ From the repo root:
 
 ```bash
 npm install
-npm run dev --workspace git-diff-viewer
+npm run dev
 ```
 
-Or run each package directly:
+The launch script prefers `http://127.0.0.1:3000` and prints the final URL with
+the `GIT_DIFF_VIEWER_URL=` prefix. If port `3000` is occupied, it uses the next
+available local port.
+
+Or run the plugin workspace directly:
 
 ```bash
-npm run dev --workspace @git-diff-viewer/server
-npm run dev --workspace @git-diff-viewer/viewer
+npm run launch --workspace git-diff-viewer
 ```
+
+MCP is intentionally out of scope for this proof of concept.

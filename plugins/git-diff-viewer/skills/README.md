@@ -2,4 +2,8 @@
 
 This directory will hold Codex skill instructions for the plugin.
 
-The first skill should describe when to use the Git Diff Viewer, which MCP tools to call, and how to keep diff content scoped to the user's active repository.
+The `git-diff-viewer` skill is intentionally small for the proof of concept:
+
+- start the local Next.js app
+- open it in the Codex browser
+- do not run review logic yet

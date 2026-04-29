@@ -4,14 +4,14 @@
   "private": true,
   "description": "Codex plugin scaffold for Git diff review and visualization.",
   "scripts": {
-    "dev": "npm run dev --workspace @git-diff-viewer/server",
-    "dev:server": "npm run dev --workspace @git-diff-viewer/server",
-    "dev:viewer": "npm run dev --workspace @git-diff-viewer/viewer",
-    "build": "npm run build --workspace @git-diff-viewer/server && npm run build --workspace @git-diff-viewer/viewer",
-    "typecheck": "npm run typecheck --workspace @git-diff-viewer/server && npm run typecheck --workspace @git-diff-viewer/viewer"
+    "dev": "npm run launch",
+    "launch": "node scripts/launch-viewer.mjs",
+    "dev:viewer": "npm run dev --workspace @git-diff-viewer/app",
+    "dev:app": "npm run launch",
+    "build": "npm run build --workspace @git-diff-viewer/app",
+    "typecheck": "npm run typecheck --workspace @git-diff-viewer/app"
   },
   "workspaces": [
-    "server",
     "viewer"
   ]
 }

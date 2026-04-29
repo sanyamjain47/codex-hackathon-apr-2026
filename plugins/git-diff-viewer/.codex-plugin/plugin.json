@@ -1,7 +1,7 @@
 {
   "name": "git-diff-viewer",
   "version": "0.1.0",
-  "description": "Codex plugin scaffold for reviewing Git diffs with a future local viewer.",
+  "description": "Codex plugin proof of concept for launching a local Git Diff Viewer UI.",
   "author": {
     "name": "IntuneAI Hackathon Team"
   },
@@ -13,26 +13,23 @@
     "review"
   ],
   "skills": "./skills/",
-  "mcpServers": "./.mcp.json",
   "apps": "./.app.json",
   "interface": {
     "displayName": "Git Diff Viewer",
-    "shortDescription": "Review Git diffs with Codex and a local viewer.",
-    "longDescription": "Scaffold for a Codex plugin that will expose Git diff review tools through MCP and render review sessions in a local web viewer.",
+    "shortDescription": "Launch a local Next.js UI for Git diff review workflows.",
+    "longDescription": "Proof of concept for a Codex plugin that starts a local Next.js Git Diff Viewer app when invoked from a Codex thread.",
     "developerName": "IntuneAI Hackathon Team",
     "category": "Productivity",
     "capabilities": [
-      "MCP",
       "Local viewer",
-      "Git review"
+      "Next.js",
+      "Git review workflow"
     ],
     "defaultPrompt": [
-      "Review my working tree with Git Diff Viewer.",
-      "Create a Git Diff Viewer review session for this branch."
+      "Open Git Diff Viewer.",
+      "Launch the Git Diff Viewer UI."
     ],
     "brandColor": "#2563EB",
-    "composerIcon": "./assets/icon.png",
-    "logo": "./assets/logo.png",
     "screenshots": []
   }
 }

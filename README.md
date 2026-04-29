@@ -2,10 +2,9 @@
 
 This repo currently contains the scaffold for a Codex plugin called `git-diff-viewer`.
 
-The goal is to give teammates clear contribution boundaries before the business logic is implemented:
+The immediate proof of concept is to let Codex launch a local Next.js UI when the Git Diff Viewer plugin is invoked.
 
-- `plugins/git-diff-viewer/server`: STDIO MCP server package.
-- `plugins/git-diff-viewer/viewer`: local web viewer package.
+- `plugins/git-diff-viewer/viewer`: local Next.js UI package.
 - `plugins/git-diff-viewer/skills`: Codex skill instructions for using the plugin.
 - `docs`: shared architecture and planning notes.
 
@@ -16,13 +15,16 @@ npm install
 npm run dev
 ```
 
-The dev script starts the plugin workspace. Individual packages can also be run directly:
+The dev script starts the plugin viewer through the same launcher the Codex
+skill uses. It prints the final local URL with the `GIT_DIFF_VIEWER_URL=`
+prefix.
+
+Individual packages can also be run directly:
 
 ```bash
-npm run dev --workspace @git-diff-viewer/server
-npm run dev --workspace @git-diff-viewer/viewer
+npm run dev:app
 ```
 
 ## Current Scope
 
-This is a scaffold only. The MCP server and viewer have placeholder entry points so teammates can start contributing without agreeing on all implementation details up front.
+This is a scaffold only. The Next.js app is a placeholder UI so teammates can prove the Codex-to-browser launch path before wiring in review logic.

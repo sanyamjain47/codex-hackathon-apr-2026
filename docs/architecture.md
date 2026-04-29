@@ -2,20 +2,27 @@
 
 ## Goal
 
-Build a Codex plugin that lets Codex review Git diffs and, later, show those diffs in a local web viewer with inline annotations.
+Build a Codex plugin proof of concept that launches a local Next.js UI when the user invokes Git Diff Viewer from a Codex thread.
 
 ## Recommended Shape
 
 ```text
-Codex
+Codex thread
   |
-  | STDIO MCP
+  | user invokes Git Diff Viewer
   v
-MCP server package
+Plugin skill
   |
-  | future localhost HTTP API
+  | npm run dev:app
   v
-Viewer package
+Launcher prints GIT_DIFF_VIEWER_URL=http://127.0.0.1:<port>
+  |
+  v
+Next.js app on 127.0.0.1:<port>
+  |
+  | Codex browser opens URL
+  v
+Visible Git Diff Viewer UI
 ```
 
 ## Packages
@@ -27,27 +34,9 @@ Path: `plugins/git-diff-viewer`
 Owns Codex plugin metadata:
 
 - `.codex-plugin/plugin.json`
-- `.mcp.json`
 - `.app.json`
 - `skills/`
-- package-level scripts that coordinate `server` and `viewer`
-
-### MCP Server
-
-Path: `plugins/git-diff-viewer/server`
-
-Initial responsibility:
-
-- Start a STDIO MCP server.
-- Expose placeholder tools while the team agrees on schemas.
-
-Future responsibility:
-
-- Resolve repo root from the active workspace.
-- Run Git commands with `cwd` set to the resolved repo root.
-- Create review sessions.
-- Store normalized diff data.
-- Start or coordinate a localhost HTTP server for the viewer.
+- package-level scripts that start the Next.js app through the local launcher
 
 ### Viewer
 
@@ -55,42 +44,28 @@ Path: `plugins/git-diff-viewer/viewer`
 
 Initial responsibility:
 
-- Provide a Vite app placeholder.
-- Establish UI conventions and contribution space.
+- Provide a minimal Next.js app.
+- Prove Codex can start and open the local UI.
 
 Future responsibility:
 
-- Render changed files and hunks.
-- Support unified and split views.
-- Show Codex annotations inline.
-- Poll, fetch, or subscribe to session updates from the server.
+- Trigger the custom review workflow.
+- Render review progress and results.
+- Show annotations once the review engine is ready.
 
 ## MVP Boundary
 
-The first implementation should be "Pure MCP + Codex reasoning":
+The first implementation should prove only this:
 
-- Codex does the review reasoning.
-- MCP tools provide repo and diff data.
-- The server owns session state.
-- The viewer consumes session state through local HTTP later.
+- the plugin can be invoked from a Codex thread
+- Codex can start the local Next.js app
+- Codex can open the `GIT_DIFF_VIEWER_URL=` URL in the browser
 
-Avoid adding an internal Codex SDK agent until the MCP and viewer workflow is stable.
-
-## Future Tool Ideas
-
-- `get_repo_info`
-- `get_working_tree_diff`
-- `get_branch_diff`
-- `create_review_session`
-- `list_changed_files`
-- `get_file_diff`
-- `add_review_annotations`
-- `open_diff_viewer`
+The review engine is out of scope for this POC.
 
 ## Security Notes
 
 - Bind local HTTP only to `127.0.0.1`.
-- Use Git argv arrays, not shell strings.
-- Do not expose arbitrary shell execution.
-- Keep file reads inside the resolved repo root.
-- Treat diff content as untrusted data.
+- Keep the skill launch command narrow.
+- MCP is not required for the proof of concept.
+- Do not run review logic until the workflow owner provides the integration contract.
