@@ -1,4 +1,4 @@
-# Git Diff Viewer — PRD
+# BetterReview — PRD
 
 ## One-line summary
 
@@ -42,7 +42,7 @@ The first version optimizes entirely for the reviewer.
 ## What it does (user-visible)
 
 1. The reviewer invokes the plugin from a Codex thread on a branch with a change set.
-2. The plugin starts a local Next.js app and prints `GIT_DIFF_VIEWER_URL=http://127.0.0.1:<port>`.
+2. The plugin starts a local static viewer and prints `BETTER_REVIEW_URL=http://127.0.0.1:<port>`.
 3. Codex opens that URL.
 4. The reviewer lands on a three-pane workspace:
    - **Tree** of cards, grouped overview → change → evidence.
@@ -72,11 +72,11 @@ Frontmatter is UI metadata only (`id`, `level`, `title`, `parent`, `order`, `ris
 
 The first usable version delivers:
 
-1. **Plugin shell** (`plugins/git-diff-viewer`) — Codex plugin metadata and a skill that launches the viewer and prints `GIT_DIFF_VIEWER_URL=`.
-2. **Local Next.js viewer** (`plugins/git-diff-viewer/viewer`) — bound to `127.0.0.1`, no auth, no telemetry.
-3. **Card loader** — reads Markdown files from a configured review directory, parses frontmatter with `gray-matter`, validates with a small zod schema, and constructs the tree from `parent`/`children` + `order`.
+1. **Plugin shell** (`plugins/better-review`) — Codex plugin metadata and a skill that launches the viewer and prints `BETTER_REVIEW_URL=`.
+2. **Local static viewer** (`plugins/better-review/viewer`) — bound to `127.0.0.1`, no auth, no telemetry.
+3. **Card loader** — reads Markdown files from a configured review directory, validates lightweight frontmatter, and constructs the tree from `parent`/`children` + `order`.
 4. **Three-pane review UI** — tree, card body, metadata side panel.
-5. **Markdown rendering** — `react-markdown` + `remark-gfm`. Custom components for images, links, code blocks, tables, and task lists. Raw HTML disabled.
+5. **Markdown rendering** — out of scope for the first progress surface; raw HTML remains disabled when full rendering is added.
 6. **Local-only review status** — toggleable per card, not persisted.
 7. **Fixture-backed development** — `examples/review/` is the canonical fixture. The viewer must run end-to-end against it without any backend.
 

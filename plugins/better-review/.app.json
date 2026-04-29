@@ -1,0 +1,14 @@
+{
+  "apps": {
+    "viewer": {
+      "name": "BetterReview",
+      "description": "Local static UI for BetterReview review progress.",
+      "path": "./viewer",
+      "launch": {
+        "command": "npm run launch --workspace better-review",
+        "preferredUrl": "http://127.0.0.1:3020",
+        "urlOutputPrefix": "BETTER_REVIEW_URL="
+      }
+    }
+  }
+}

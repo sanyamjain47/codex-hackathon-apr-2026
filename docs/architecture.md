@@ -1,71 +1,79 @@
-# Git Diff Viewer Architecture
+# BetterReview Architecture
 
 ## Goal
 
-Build a Codex plugin proof of concept that launches a local Next.js UI when the user invokes Git Diff Viewer from a Codex thread.
+Build a Codex plugin that launches a local static UI when the user invokes BetterReview from a Codex thread, then starts a fire-and-forget Codex App Server review worker that writes Markdown review cards.
 
 ## Recommended Shape
 
 ```text
 Codex thread
   |
-  | user invokes Git Diff Viewer
+  | user invokes BetterReview
   v
 Plugin skill
   |
-  | npm run dev:app
+  | npm run dev:app + npm run start-review
   v
-Launcher reuses or starts app, then prints GIT_DIFF_VIEWER_URL=http://127.0.0.1:<port>
+Launcher reuses or starts app, then prints BETTER_REVIEW_URL=http://127.0.0.1:<port>
   |
   v
-Next.js app on 127.0.0.1:<port>
+Static viewer on 127.0.0.1:<port>
   |
-  | Codex browser opens URL
+  | polls .better-review/current
   v
-Visible Git Diff Viewer UI
+Visible BetterReview UI
+  ^
+  |
+Codex App Server review worker writes .better-review/current/cards/*.md
 ```
+
+The default model is `gpt-5.4` with `serviceTier: "fast"` and `effort: "low"`,
+because the local App Server currently advertises `gpt-5.4` as fast-capable and
+does not list `gpt-5.5`. Override with `BETTER_REVIEW_MODEL` when a newer model
+is available.
 
 ## Packages
 
 ### Plugin Shell
 
-Path: `plugins/git-diff-viewer`
+Path: `plugins/better-review`
 
 Owns Codex plugin metadata:
 
 - `.codex-plugin/plugin.json`
 - `.app.json`
 - `skills/`
-- package-level scripts that reuse or start the Next.js app through the local launcher
+- package-level scripts that reuse or start the static viewer through the local launcher
 
 ### Viewer
 
-Path: `plugins/git-diff-viewer/viewer`
+Path: `plugins/better-review/viewer`
 
 Initial responsibility:
 
-- Provide a minimal Next.js app.
+- Provide a minimal static viewer.
 - Prove Codex can start and open the local UI.
 
 Future responsibility:
 
-- Trigger the custom review workflow.
-- Render review progress and results.
+- Render full review card content.
 - Show annotations once the review engine is ready.
 
 ## MVP Boundary
 
-The first implementation should prove only this:
+The first implementation should prove this:
 
 - the plugin can be invoked from a Codex thread
-- Codex can start the local Next.js app
-- Codex can open the `GIT_DIFF_VIEWER_URL=` URL in the browser
-
-The review engine is out of scope for this POC.
+- Codex can start the local static viewer
+- Codex can open the `BETTER_REVIEW_URL=` URL in the browser
+- the review worker can prepare `.better-review/current`
+- the static viewer can show review status and card count
+- generated cards validate against `docs/contract.md`
 
 ## Security Notes
 
 - Bind local HTTP only to `127.0.0.1`.
 - Keep the skill launch command narrow.
 - MCP is not required for the proof of concept.
-- Do not run review logic until the workflow owner provides the integration contract.
+- The review worker must write only inside `.better-review/current/cards`.

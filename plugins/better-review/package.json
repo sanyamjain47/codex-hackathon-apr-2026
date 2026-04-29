@@ -1,0 +1,17 @@
+{
+  "name": "better-review",
+  "version": "0.1.1",
+  "private": true,
+  "description": "Codex plugin scaffold for BetterReview review generation and visualization.",
+  "scripts": {
+    "dev": "npm run launch",
+    "launch": "node scripts/launch-viewer.mjs",
+    "dev:viewer": "npm run launch",
+    "dev:app": "npm run launch",
+    "build": "npm run typecheck",
+    "start-review": "node scripts/start-review.mjs",
+    "seed:fixture": "node scripts/seed-fixture.mjs",
+    "validate:cards": "node scripts/validate-cards.mjs",
+    "typecheck": "node --check scripts/launch-viewer.mjs && node --check scripts/start-review.mjs && node --check scripts/review-worker.mjs && node --check scripts/validate-cards.mjs && node --check scripts/seed-fixture.mjs"
+  }
+}

@@ -2,16 +2,18 @@
   "name": "codex-hackathon-apr-2026",
   "version": "0.1.0",
   "private": true,
-  "description": "Workspace for Codex Git diff viewer plugin experiments.",
+  "description": "Workspace for Codex BetterReview plugin experiments.",
   "scripts": {
-    "dev": "npm run dev --workspace plugins/git-diff-viewer",
-    "dev:viewer": "npm run dev --workspace @git-diff-viewer/app",
-    "dev:app": "npm run launch --workspace git-diff-viewer",
-    "build": "npm run build --workspace plugins/git-diff-viewer",
-    "typecheck": "npm run typecheck --workspace plugins/git-diff-viewer"
+    "dev": "npm run dev --workspace plugins/better-review",
+    "dev:viewer": "npm run dev --workspace better-review",
+    "dev:app": "npm run launch --workspace better-review",
+    "build": "npm run build --workspace plugins/better-review",
+    "typecheck": "npm run typecheck --workspace plugins/better-review",
+    "start-review": "npm run start-review --workspace better-review --",
+    "validate:cards": "npm run validate:cards --workspace better-review --",
+    "seed:review-fixture": "npm run seed:fixture --workspace better-review"
   },
   "workspaces": [
-    "plugins/git-diff-viewer",
-    "plugins/git-diff-viewer/viewer"
+    "plugins/better-review"
   ]
 }

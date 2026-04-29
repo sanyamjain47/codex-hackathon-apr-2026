@@ -1,0 +1,36 @@
+{
+  "name": "better-review",
+  "version": "0.1.1",
+  "description": "Codex plugin for generating human-friendly BetterReview cards from branch diffs.",
+  "author": {
+    "name": "IntuneAI Hackathon Team"
+  },
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "git",
+    "diff",
+    "review"
+  ],
+  "skills": "./skills/",
+  "apps": "./.app.json",
+  "interface": {
+    "displayName": "BetterReview",
+    "shortDescription": "Generate and view human-friendly review cards for branch diffs.",
+    "longDescription": "Codex plugin that launches a local BetterReview viewer and starts a Codex App Server worker to turn branch diffs into Markdown review cards.",
+    "developerName": "IntuneAI Hackathon Team",
+    "category": "Productivity",
+    "capabilities": [
+      "Local viewer",
+      "Static viewer",
+      "Codex App Server",
+      "Review cards"
+    ],
+    "defaultPrompt": [
+      "Run BetterReview.",
+      "Review this branch with BetterReview."
+    ],
+    "brandColor": "#2563EB",
+    "screenshots": []
+  }
+}

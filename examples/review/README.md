@@ -1,6 +1,6 @@
 # Example Review Tree
 
-This folder is a sample input for the Git Diff Viewer frontend. It models a realistic feature branch — **adding Stripe-based subscription billing to a SaaS app** — using the lightweight card contract from `docs/contract.md`:
+This folder is a sample input for the BetterReview frontend. It models a realistic feature branch — **adding Stripe-based subscription billing to a SaaS app** — using the lightweight card contract from `docs/contract.md`:
 
 - Frontmatter is UI metadata.
 - Markdown body is review content.
@@ -23,19 +23,19 @@ These are the three Level 2 cards. Each is supported by Level 3 evidence cards w
 Use this data shape first, before wiring a real review engine:
 
 1. Load every `*.md` file from `examples/review`.
-2. Parse frontmatter with `gray-matter`.
-3. Validate the card shape with a small TypeScript schema (zod).
+2. Parse lightweight frontmatter.
+3. Validate the card shape with the BetterReview validator.
 4. Sort cards by `parent` and `order`.
 5. Render a three-pane review UI:
    - left: tree navigation
    - center: Markdown card body
    - right: metadata, risk, status, labels, evidence links
-6. Render Markdown with `react-markdown` + `remark-gfm`, with custom components for images, links, code blocks, tables, and task lists.
+6. Render Markdown in the eventual card renderer, with custom handling for images, links, code blocks, tables, and task lists.
 7. Keep review status local-only at first; replace with persisted state once the backend workflow contract exists.
 
 ## Renderer choice
 
-`react-markdown` + `remark-gfm` for the first pass. Fits Server Components, supports custom React components per element, and is extensible via the `remark` / `rehype` ecosystem. Use `rehype-sanitize` if review content ever comes from untrusted sources.
+The first pass uses a static progress surface only. When full card rendering lands, keep raw HTML disabled unless paired with sanitization.
 
 ## Files
 

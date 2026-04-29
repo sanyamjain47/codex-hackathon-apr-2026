@@ -5,10 +5,10 @@
   },
   "plugins": [
     {
-      "name": "git-diff-viewer",
+      "name": "better-review",
       "source": {
         "source": "local",
-        "path": "./plugins/git-diff-viewer"
+        "path": "./plugins/better-review"
       },
       "policy": {
         "installation": "AVAILABLE",
