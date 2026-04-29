@@ -6,7 +6,7 @@
       "path": "./viewer",
       "launch": {
         "command": "npm run launch --workspace git-diff-viewer",
-        "preferredUrl": "http://127.0.0.1:3000",
+        "preferredUrl": "http://127.0.0.1:3020",
         "urlOutputPrefix": "GIT_DIFF_VIEWER_URL="
       }
     }

@@ -4,7 +4,10 @@ import "./styles.css";
 
 export const metadata: Metadata = {
   title: "Git Diff Viewer",
-  description: "Codex plugin UI proof of concept"
+  description: "Codex plugin UI proof of concept",
+  other: {
+    "git-diff-viewer-app": "true"
+  }
 };
 
 export default function RootLayout({
@@ -14,7 +17,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body data-git-diff-viewer-app="true">{children}</body>
     </html>
   );
 }

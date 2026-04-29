@@ -22,9 +22,10 @@ npm install
 npm run dev
 ```
 
-The launch script prefers `http://127.0.0.1:3000` and prints the final URL with
-the `GIT_DIFF_VIEWER_URL=` prefix. If port `3000` is occupied, it uses the next
-available local port.
+The launch script prefers `http://127.0.0.1:3020` and prints the final URL with
+the `GIT_DIFF_VIEWER_URL=` prefix. If Git Diff Viewer is already running there,
+the launcher prints that URL and exits successfully. If the port is occupied by
+something else, it uses the next available local port.
 
 Or run the plugin workspace directly:
 

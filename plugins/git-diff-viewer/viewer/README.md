@@ -18,8 +18,8 @@ The plugin launcher is the preferred POC entrypoint:
 npm run dev:app
 ```
 
-It binds to `127.0.0.1`, prefers port `3000`, and falls back to another local
-port when needed.
+It binds to `127.0.0.1`, prefers port `3020`, reuses an already-running Git Diff
+Viewer instance, and falls back to another local port when needed.
 
 ## Future Work
 

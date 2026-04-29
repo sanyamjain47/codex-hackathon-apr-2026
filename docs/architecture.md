@@ -15,7 +15,7 @@ Plugin skill
   |
   | npm run dev:app
   v
-Launcher prints GIT_DIFF_VIEWER_URL=http://127.0.0.1:<port>
+Launcher reuses or starts app, then prints GIT_DIFF_VIEWER_URL=http://127.0.0.1:<port>
   |
   v
 Next.js app on 127.0.0.1:<port>
@@ -36,7 +36,7 @@ Owns Codex plugin metadata:
 - `.codex-plugin/plugin.json`
 - `.app.json`
 - `skills/`
-- package-level scripts that start the Next.js app through the local launcher
+- package-level scripts that reuse or start the Next.js app through the local launcher
 
 ### Viewer
 

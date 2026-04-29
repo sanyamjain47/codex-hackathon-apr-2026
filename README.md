@@ -15,8 +15,8 @@ npm install
 npm run dev
 ```
 
-The dev script starts the plugin viewer through the same launcher the Codex
-skill uses. It prints the final local URL with the `GIT_DIFF_VIEWER_URL=`
+The dev script reuses or starts the plugin viewer through the same launcher the
+Codex skill uses. It prints the final local URL with the `GIT_DIFF_VIEWER_URL=`
 prefix.
 
 Individual packages can also be run directly:
